@@ -1,0 +1,37 @@
+# Guidelines : section « En-têtes HTTP, CORS et cookies »
+nelmio_security:
+    clickjacking:
+        paths:
+            '^/.*': DENY
+    content_type:
+        nosniff: true
+    referrer_policy:
+        enabled: true
+        policies:
+            - 'strict-origin-when-cross-origin'
+    # L'API ne renvoie que du JSON : CSP minimale. La CSP de l'application Angular est posée par le serveur web.
+    csp:
+        enforce:
+            level1_fallback: false
+            default-src: ['none']
+            frame-ancestors: ['none']
+            base-uri: ['none']
+    permissions_policy:
+        enabled: true
+        policies:
+            camera: []
+            microphone: []
+            geolocation: []
+    cross_origin_isolation:
+        enabled: true
+        paths:
+            '^/': { coop: 'same-origin', corp: 'same-origin' }
+
+when@prod:
+    nelmio_security:
+        forced_ssl:
+            enabled: true
+            # Sonde de santé interne du conteneur (127.0.0.1:8081, HTTP).
+            allow_list: ['^/api/health$']
+            hsts_max_age: 31536000
+            hsts_subdomains: true

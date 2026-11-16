@@ -1,0 +1,58 @@
+# Guidelines : sections « Cryptographie », « Authentification », « Autorisations »
+security:
+    password_hashers:
+        # Argon2id via libsodium. Ne jamais remplacer par un hash rapide (SHA-*, xxh3).
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+            algorithm: sodium
+
+    # ROLE_ADMIN : tout ; ROLE_EDITOR : actualités et galerie (branche ICC) ; ROLE_MEMBER : espace membre (ressources).
+    role_hierarchy:
+        ROLE_ADMIN: [ROLE_EDITOR]
+        ROLE_EDITOR: [ROLE_MEMBER]
+
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    firewalls:
+        dev:
+            pattern: ^/(_profiler(/|$)|(_wdt|assets|build)/)
+            security: false
+        main:
+            lazy: true
+            provider: app_user_provider
+            # Session cookie HttpOnly (SPA servie sur le même site que l'API) — pas de JWT par défaut.
+            json_login:
+                check_path: api_login
+                username_path: email
+                password_path: password
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
+            logout:
+                path: api_logout
+
+    # Refus par défaut : toute route /api exige une authentification complète,
+    # les routes publiques sont listées explicitement AVANT.
+    access_control:
+        - { path: ^/api/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/health$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/session$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/setup$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/public/, roles: PUBLIC_ACCESS }
+        - { path: ^/api/media/, roles: PUBLIC_ACCESS }
+        - { path: ^/api/member/, roles: ROLE_MEMBER }
+        - { path: ^/api/admin/(news|gallery)(/|$), roles: ROLE_EDITOR }
+        - { path: ^/api/admin, roles: ROLE_ADMIN }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+
+when@test:
+    security:
+        password_hashers:
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4
+                time_cost: 3
+                memory_cost: 10

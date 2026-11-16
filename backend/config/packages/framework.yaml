@@ -1,0 +1,23 @@
+framework:
+    secret: '%env(APP_SECRET)%'
+    http_method_override: false
+    trusted_proxies: '%env(default::TRUSTED_PROXIES)%'
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-port']
+
+    session:
+        cookie_httponly: true
+        cookie_secure: auto
+        cookie_samesite: lax
+
+when@prod:
+    framework:
+        session:
+            # Préfixe __Host- : Secure, Path=/, pas de Domain → non injectable depuis un sous-domaine.
+            name: '__Host-SID'
+            cookie_secure: true
+
+when@test:
+    framework:
+        test: true
+        session:
+            storage_factory_id: session.storage.factory.mock_file

@@ -1,0 +1,441 @@
+/* Clan Imperium — styles globaux. Valeurs : src/styles/_tokens.scss (charte imperium_design). */
+@use 'styles/tokens';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* --- Couleur d'accent : neutre (ivoire) par défaut, couleur de la branche dans sa zone ---
+   Enregistrées avec @property pour que le changement de couleur soit ANIMÉ (une variable CSS
+   ordinaire changerait d'un coup). BranchTheme pose data-branche sur <html>. */
+@property --accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f4f1ec;
+}
+@property --accent-trait {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #2a2a31;
+}
+:root {
+  --accent: var(--imp-ivoire);
+  --accent-trait: var(--imp-trait);
+  transition:
+    --accent 0.7s ease,
+    --accent-trait 0.7s ease;
+}
+:root[data-branche='ICG'] {
+  --accent: var(--imp-icg);
+  --accent-trait: var(--imp-icg);
+}
+:root[data-branche='ICF'] {
+  --accent: var(--imp-icf);
+  --accent-trait: var(--imp-icf);
+}
+:root[data-branche='ICC'] {
+  --accent: var(--imp-icc);
+  --accent-trait: var(--imp-icc);
+}
+:root[data-branche='ICS'] {
+  --accent: var(--imp-ics);
+  --accent-trait: var(--imp-ics);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--imp-noir);
+  color: var(--imp-ivoire);
+  font-family: var(--imp-police-texte);
+  font-size: var(--imp-taille-m);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--imp-e-4);
+  top: -100px;
+  z-index: 100;
+  background: var(--imp-ivoire);
+  color: var(--imp-noir);
+  padding: var(--imp-e-3) var(--imp-e-4);
+  border-radius: var(--imp-rayon-m);
+  font-weight: 600;
+  &:focus {
+    top: var(--imp-e-4);
+  }
+}
+
+/* --- Typographie --- */
+.gothique,
+h1,
+h2.gothique {
+  font-family: var(--imp-police-titre);
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none; /* jamais de gothique en capitales */
+}
+h1 {
+  font-size: clamp(2.25rem, 6vw, var(--imp-taille-titre-m));
+  line-height: 1.1;
+  margin: 0;
+}
+h2 {
+  font-size: var(--imp-taille-l);
+  font-weight: 600;
+  margin: 0;
+}
+h2.gothique {
+  font-size: clamp(1.75rem, 4vw, var(--imp-taille-titre-s));
+  line-height: 1.15;
+}
+h3 {
+  font-size: var(--imp-taille-m);
+  font-weight: 600;
+  margin: 0;
+}
+p {
+  margin: 0;
+}
+
+.libelle {
+  font-size: var(--imp-taille-xs);
+  font-weight: 600;
+  letter-spacing: var(--imp-espacement-libelle);
+  text-transform: uppercase;
+  color: var(--imp-gris-sombre);
+  margin: 0;
+}
+.secondaire {
+  color: var(--imp-gris-sombre);
+}
+.code {
+  font-family: var(--imp-police-code);
+  font-size: var(--imp-taille-s);
+}
+
+.texte {
+  display: grid;
+  gap: var(--imp-e-4);
+  max-width: 68ch;
+}
+.texte p {
+  white-space: pre-line;
+}
+
+/* --- Mise en page --- */
+.conteneur {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--imp-e-4);
+}
+@media (min-width: 768px) {
+  .conteneur {
+    padding: 0 var(--imp-e-6);
+  }
+}
+
+.section {
+  padding-block: var(--imp-e-8);
+  display: grid;
+  gap: var(--imp-e-5);
+}
+.section-entete {
+  display: grid;
+  gap: var(--imp-e-2);
+}
+.page-entete {
+  padding-block: var(--imp-e-8) var(--imp-e-5);
+  display: grid;
+  gap: var(--imp-e-3);
+}
+
+.grille {
+  display: grid;
+  gap: var(--imp-e-4);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+}
+.grille-l {
+  display: grid;
+  gap: var(--imp-e-4);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+}
+.pile {
+  display: grid;
+  gap: var(--imp-e-3);
+  align-content: start;
+}
+.ligne {
+  display: flex;
+  gap: var(--imp-e-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* --- Cartes --- */
+.carte {
+  background: var(--imp-panneau);
+  border: 1px solid var(--imp-trait);
+  border-radius: var(--imp-rayon-l);
+  padding: var(--imp-e-5);
+  display: grid;
+  gap: var(--imp-e-3);
+  align-content: start;
+}
+a.carte,
+.carte-lien {
+  text-decoration: none;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+a.carte:hover,
+.carte-lien:hover {
+  background: var(--imp-panneau-2);
+  border-color: var(--imp-trait-fort);
+}
+
+/* --- Boutons (hauteur 48 px) --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--imp-e-2);
+  min-height: var(--imp-hauteur-bouton);
+  padding: 0 var(--imp-e-5);
+  border-radius: var(--imp-rayon-m);
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    opacity 0.15s;
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+/* Principal : ivoire, ou couleur de la branche dans sa zone (charte : « bouton propre à une branche :
+   fond couleur de la branche, texte noir »). Toutes les couleurs d'accent sont claires : texte noir lisible. */
+.btn-principal {
+  background: var(--accent);
+  color: var(--imp-noir);
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--accent) 86%, var(--imp-noir));
+  }
+}
+.accent {
+  color: var(--accent);
+}
+.btn-secondaire {
+  background: transparent;
+  color: var(--imp-ivoire);
+  border-color: var(--imp-trait-fort);
+  &:hover:not(:disabled) {
+    background: var(--imp-panneau-2);
+  }
+}
+.btn-danger {
+  background: transparent;
+  color: var(--imp-icg);
+  border-color: var(--imp-trait-fort);
+  &:hover:not(:disabled) {
+    background: var(--imp-panneau-2);
+  }
+}
+.btn-petit {
+  min-height: 44px;
+  padding: 0 var(--imp-e-4);
+}
+
+/* --- Pastilles de branche --- */
+.pastille {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--imp-e-2);
+  border: 1px solid var(--imp-trait-fort);
+  border-radius: var(--imp-rayon-pastille);
+  padding: 2px var(--imp-e-3);
+  font-size: var(--imp-taille-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  &::before {
+    content: '';
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--pastille, var(--imp-trait-fort));
+  }
+}
+
+/* --- Formulaires --- */
+.champ {
+  display: grid;
+  gap: var(--imp-e-2);
+}
+.champ > label,
+.champ > legend,
+fieldset > legend {
+  font-weight: 600;
+  font-size: var(--imp-taille-s);
+  padding: 0;
+}
+.champ .aide {
+  font-size: var(--imp-taille-s);
+  color: var(--imp-gris-sombre);
+}
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='url'],
+input[type='number'],
+input[type='search'],
+input[type='datetime-local'],
+textarea,
+select {
+  width: 100%;
+  min-height: var(--imp-hauteur-bouton);
+  padding: var(--imp-e-3) var(--imp-e-4);
+  background: var(--imp-noir);
+  color: var(--imp-ivoire);
+  border: 1px solid var(--imp-trait-fort);
+  border-radius: var(--imp-rayon-m);
+  font: inherit;
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  &[aria-invalid='true'] {
+    border-color: var(--imp-icg);
+  }
+}
+textarea {
+  min-height: 140px;
+  resize: vertical;
+  line-height: 1.5;
+}
+input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+  margin: 0;
+  flex: none;
+}
+.case {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--imp-e-3);
+  min-height: 44px;
+  cursor: pointer;
+}
+.erreur {
+  color: var(--imp-icg);
+  font-size: var(--imp-taille-s);
+}
+.succes {
+  color: var(--imp-ics);
+}
+.alerte {
+  border: 1px solid var(--imp-trait-fort);
+  border-radius: var(--imp-rayon-m);
+  padding: var(--imp-e-4);
+  background: var(--imp-panneau);
+}
+
+/* --- Bandeau signature 4 couleurs --- */
+.bandeau {
+  display: flex;
+  height: var(--imp-bandeau);
+}
+.bandeau span {
+  flex: 1;
+}
+.bandeau .icg {
+  background: var(--imp-icg);
+}
+.bandeau .icf {
+  background: var(--imp-icf);
+}
+.bandeau .icc {
+  background: var(--imp-icc);
+}
+.bandeau .ics {
+  background: var(--imp-ics);
+}
+
+/* --- Tableaux (admin) --- */
+.tableau {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--imp-taille-s);
+}
+.tableau th,
+.tableau td {
+  text-align: left;
+  padding: var(--imp-e-3);
+  border-bottom: 1px solid var(--imp-trait);
+  vertical-align: top;
+}
+.tableau th {
+  color: var(--imp-gris-sombre);
+  font-weight: 600;
+}
+.defile {
+  overflow-x: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}

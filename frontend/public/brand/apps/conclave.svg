@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Conclave</title>
+  <style>#templar { display: none } @media (prefers-color-scheme: dark) { #assassin { display: none } #templar { display: inline } }</style>
+  <g id="assassin"><circle cx="32" cy="32" r="30" fill="#a3171d" stroke="#231c15" stroke-width="2"/><path d="M45 21.84 A16.5 16.5 0 1 0 45 42.16" fill="none" stroke="#fbf7ee" stroke-width="9.5"/><path d="M32 23 L34.8 29.2 L41 32 L34.8 34.8 L32 41 L29.2 34.8 L23 32 L29.2 29.2 Z" fill="#e8c46a" stroke="#231c15" stroke-width="1" stroke-linejoin="round"/></g>
+  <g id="templar"><circle cx="32" cy="32" r="30" fill="#181413" stroke="#d4af37" stroke-width="2"/><path d="M45 21.84 A16.5 16.5 0 1 0 45 42.16" fill="none" stroke="#d4af37" stroke-width="9.5"/><path d="M32 23 L34.8 29.2 L41 32 L34.8 34.8 L32 41 L29.2 34.8 L23 32 L29.2 29.2 Z" fill="#c4141e" stroke="#d4af37" stroke-width="1" stroke-linejoin="round"/></g>
+</svg>

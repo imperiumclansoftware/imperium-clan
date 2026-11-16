@@ -1,0 +1,20 @@
+framework:
+    rate_limiter:
+        # Formulaire « Rejoindre » : 3 candidatures par heure et par IP.
+        join_request:
+            policy: sliding_window
+            limit: 3
+            interval: '1 hour'
+        # Installation (page /installation) : 5 essais de jeton par quart d'heure et par IP.
+        setup:
+            policy: sliding_window
+            limit: 5
+            interval: '15 minutes'
+
+when@test:
+    framework:
+        rate_limiter:
+            join_request:
+                policy: sliding_window
+                limit: 2
+                interval: '1 hour'

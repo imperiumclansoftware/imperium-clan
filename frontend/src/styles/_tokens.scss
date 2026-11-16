@@ -1,0 +1,80 @@
+/* ==========================================================
+   Clan Imperium — jetons de design (design tokens)
+   Source de vérité : CHARTE.md · Version 1.0 · novembre 2026
+   Copie de imperium_design/tokens/tokens.css (chemins des polices adaptés). Ne pas modifier ici : mettre à jour depuis le dépôt de la charte.
+   ========================================================== */
+
+@font-face {
+  font-family: 'UnifrakturCook';
+  src: url('../fonts/UnifrakturCook-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('../fonts/Inter-Variable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  /* --- Neutres --- */
+  --imp-noir: #0e0e10; /* fond principal sombre */
+  --imp-panneau: #141418; /* cartes, panneaux sur fond sombre */
+  --imp-panneau-2: #1c1c21; /* survol, niveau 2 */
+  --imp-trait: #2a2a31; /* bordures, arcs éteints du sceau */
+  --imp-trait-fort: #3a3a42; /* bordures marquées, anneau du sceau */
+  --imp-ivoire: #f4f1ec; /* texte principal sur sombre, fond clair */
+  --imp-ivoire-2: #e9e6e0; /* fond clair secondaire */
+  --imp-encre: #111114; /* texte principal sur clair */
+  --imp-gris-sombre: #a8a49c; /* texte secondaire SUR FOND SOMBRE (7.8:1) */
+  --imp-gris-clair: #5c5c5c; /* texte secondaire SUR FOND CLAIR (5.9:1) */
+
+  /* --- Branches : couleurs principales (fond sombre, arcs du sceau) --- */
+  --imp-icg: #ff4655; /* Imperium Clan Gaming */
+  --imp-icf: #f5b82e; /* Imperium Clan FanDom */
+  --imp-icc: #a47bff; /* Imperium Clan Communication */
+  --imp-ics: #2bd99f; /* Imperium Clan Software */
+
+  /* --- Branches : variantes TEXTE SUR FOND CLAIR (contraste ≥ 5:1) --- */
+  --imp-icg-texte-clair: #c8102e;
+  --imp-icf-texte-clair: #8a5f00;
+  --imp-icc-texte-clair: #6d3fd9;
+  --imp-ics-texte-clair: #0b6b4c;
+
+  /* --- Typographie --- */
+  --imp-police-titre: 'UnifrakturCook', 'Old English Text MT', serif;
+  --imp-police-texte: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --imp-police-code: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+
+  --imp-taille-xs: 0.75rem; /* 12px — libellés en capitales */
+  --imp-taille-s: 0.875rem; /* 14px */
+  --imp-taille-m: 1rem; /* 16px — texte courant */
+  --imp-taille-l: 1.25rem; /* 20px */
+  --imp-taille-titre-s: 2rem; /* 32px — gothique */
+  --imp-taille-titre-m: 3rem; /* 48px — gothique */
+  --imp-taille-titre-l: 4.25rem; /* 68px — gothique */
+  --imp-espacement-libelle: 0.18em; /* libellés en capitales Inter */
+
+  /* --- Espacements (base 4px) --- */
+  --imp-e-1: 4px;
+  --imp-e-2: 8px;
+  --imp-e-3: 12px;
+  --imp-e-4: 16px;
+  --imp-e-5: 24px;
+  --imp-e-6: 32px;
+  --imp-e-7: 48px;
+  --imp-e-8: 64px;
+  --imp-e-9: 96px;
+
+  /* --- Rayons --- */
+  --imp-rayon-s: 8px; /* badges */
+  --imp-rayon-m: 12px; /* boutons, champs */
+  --imp-rayon-l: 16px; /* cartes */
+  --imp-rayon-xl: 24px; /* grandes cartes, carte de membre mobile */
+  --imp-rayon-pastille: 999px;
+
+  /* --- Divers --- */
+  --imp-hauteur-bouton: 48px; /* cible tactile ≥ 44px */
+  --imp-bandeau: 6px; /* bandeau 4 couleurs en bas de page */
+}
