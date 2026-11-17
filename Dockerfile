@@ -41,8 +41,11 @@ LABEL org.opencontainers.image.title="Imperium Clan" \
       org.opencontainers.image.source="https://github.com/imperiumclansoftware/imperium-clan" \
       org.opencontainers.image.licenses="proprietary"
 
+# DATABASE_URL par défaut dans l'image (et non seulement dans l'entrypoint) : visible aussi des
+# « docker exec … php bin/console ». Une valeur passée au conteneur la remplace.
 ENV APP_ENV=prod \
     APP_DEBUG=0 \
+    DATABASE_URL=sqlite:////data/imperium.db \
     SERVER_NAME=:8080 \
     XDG_DATA_HOME=/data \
     XDG_CONFIG_HOME=/config \
@@ -63,6 +66,7 @@ RUN frankenphp validate --config /etc/caddy/Caddyfile --adapter caddyfile \
     && rm -rf /app/var/uploads /app/var/share /data/caddy \
     && ln -s /data/uploads /app/var/uploads \
     && ln -s /data/share /app/var/share \
+    && ln -s /data/.env.prod.local /app/.env.prod.local \
     && chown -R imperium:imperium /data /config /app/var
 
 USER imperium

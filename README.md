@@ -91,7 +91,9 @@ une seule image, utilisateur non privilégié, données dans le volume `/data`.
 
 - `docker/Caddyfile` : `/api/*` → Symfony, le reste → Angular (`try_files … /index.html`), **CSP et en-têtes du
   front** (à tenir à jour si l'application charge une nouvelle source), cache long des fichiers hachés.
-- `docker/entrypoint.sh` : `APP_SECRET` généré dans `/data` s'il n'est pas fourni ; SQLite dans `/data` par défaut
+- `docker/entrypoint.sh` : `APP_SECRET` généré dans `/data` s'il n'est pas fourni, et recopié dans
+  `/data/.env.prod.local` (lien `/app/.env.prod.local`) pour que les `docker exec … php bin/console` le
+  voient aussi (ils ne passent pas par l'entrypoint) ; SQLite dans `/data` par défaut (`DATABASE_URL` de l'image)
   (schéma mis à jour au démarrage), PostgreSQL si `DATABASE_URL` est fourni (migrations) ; `app:content:init` ;
   jeton d'installation ; tâches planifiées (`docker/cron.sh`, désactivables par `DISABLE_CRON=1`).
 - `DOCKERHUB.md` : overview Docker Hub (démarrage, variables, sauvegarde) — **à tenir à jour** avec les variables.
@@ -117,13 +119,16 @@ purge quotidienne). Hors Docker :
 30 3 * * *    php bin/console app:join-requests:purge  # RGPD : candidatures > 6 mois
 ```
 
-## Conclave (à venir)
+## Conclave
 
 - **SSO** des administrateurs : Conclave fournisseur OpenID Connect (ADR 0003, *proposé*). En attendant, comptes
   locaux créés par la page `/installation` (premier administrateur) puis `app:user:create` (ils resteront le secours).
-- **Membres** : `ConclaveMemberSource` attend `POST /oauth/token` (client credentials, scope `portal:members`)
-  et `GET /api/portal/members` côté Conclave (ADR 0004, *proposé*). Variables : `CONCLAVE_URL`,
-  `CONCLAVE_CLIENT_ID`, `CONCLAVE_CLIENT_SECRET` (secret dans le coffre Symfony).
+- **Membres** (ADR 0004, *accepté*) : `ConclaveMemberSource` appelle `POST /oauth/token` (client credentials,
+  scope `portal:members`) puis `GET /api/portal/members`, fournis par **Conclave ≥ 0.7.0**. Côté Conclave :
+  `docker exec -it conclave-conclave-1 php bin/console app:oauth:client:create --name="Portail" --scope=portal:members`.
+  Variables du portail : `CONCLAVE_URL` (adresse publique HTTPS de Conclave, identique à la sienne : les avatars
+  ne sont acceptés que depuis cet hôte), `CONCLAVE_CLIENT_ID`, `CONCLAVE_CLIENT_SECRET`. Seuls les membres qui
+  ont coché « Apparaître sur le site public du clan » dans leur profil Conclave sont importés.
 
 ## Sécurité — écarts assumés
 

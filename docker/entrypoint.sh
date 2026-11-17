@@ -6,15 +6,21 @@ DATA=/data
 mkdir -p "$DATA/uploads" "$DATA/share"
 
 # APP_SECRET : variable d'environnement, sinon secret aléatoire généré une fois et conservé dans le volume.
+# Il est aussi écrit dans /data/.env.prod.local (lien /app/.env.prod.local), que Symfony lit dans TOUS les
+# processus : un « docker exec … php bin/console » ne passe pas par ce script et n'hérite pas de ses export.
+# Une vraie variable d'environnement reste prioritaire sur ce fichier.
 if [ -z "${APP_SECRET:-}" ]; then
 	if [ ! -s "$DATA/.app_secret" ]; then
 		(umask 077 && php -r 'echo bin2hex(random_bytes(32));' > "$DATA/.app_secret")
 	fi
 	APP_SECRET="$(cat "$DATA/.app_secret")"
 	export APP_SECRET
+	(umask 077 && printf 'APP_SECRET=%s\n' "$APP_SECRET" > "$DATA/.env.prod.local")
+else
+	rm -f "$DATA/.env.prod.local"
 fi
 
-# Base : SQLite dans le volume par défaut, PostgreSQL si DATABASE_URL est fourni.
+# Base : SQLite dans le volume par défaut (DATABASE_URL de l'image), PostgreSQL si DATABASE_URL est fourni.
 if [ -z "${DATABASE_URL:-}" ]; then
 	DATABASE_URL="sqlite:///$DATA/imperium.db"
 	export DATABASE_URL

@@ -1,6 +1,6 @@
 # ADR 0004 — Membres publics synchronisés depuis Conclave
 
-- Statut : proposé
+- Statut : accepté — implémenté côté Conclave en 0.7.0 (`app:oauth:client:create`, ADR 0001 de Conclave)
 - Date : 2026-11-10
 
 ## Contexte
