@@ -9,7 +9,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 final readonly class GalleryEventInput
 {
-    /** @param list<string> $branches */
+    /**
+     * @param array<mixed> $description
+     * @param list<string> $branches
+     */
     public function __construct(
         #[Assert\NotBlank(message: 'Donne un titre à l’événement.')]
         #[Assert\Length(max: 120)]
@@ -17,8 +20,8 @@ final readonly class GalleryEventInput
         #[Assert\NotBlank]
         #[Assert\Date(message: 'Date invalide.')]
         public string $date,
-        #[Assert\Length(max: 5000)]
-        public string $description = '',
+        /** Document de l'éditeur (JSON ProseMirror/Tiptap), nettoyé par App\News\RichText. */
+        public array $description = [],
         #[Assert\Unique]
         #[Assert\All([new Assert\Choice(choices: BranchList::VALUES)])]
         public array $branches = [],

@@ -96,4 +96,27 @@ describe('isSafeHref', () => {
     expect(isSafeHref('javascript:alert(1)')).toBe(false);
     expect(isSafeHref('data:text/html,x')).toBe(false);
   });
+  it('rend les images du site avec leur texte alternatif', () => {
+    const fixture = TestBed.createComponent(RichText);
+    fixture.componentRef.setInput('doc', {
+      type: 'doc',
+      content: [
+        {
+          type: 'image',
+          attrs: {
+            src: 'api/media/content/0b9a3c1e-5d7f-4a2b-9c8d-1e2f3a4b5c6d.webp',
+            alt: 'Le clan',
+          },
+        },
+      ],
+    } satisfies RichDoc);
+    fixture.detectChanges();
+
+    const img = (fixture.nativeElement as HTMLElement).querySelector('figure.image > img');
+    expect(img?.getAttribute('src')).toBe(
+      'api/media/content/0b9a3c1e-5d7f-4a2b-9c8d-1e2f3a4b5c6d.webp',
+    );
+    expect(img?.getAttribute('alt')).toBe('Le clan');
+    expect(img?.getAttribute('loading')).toBe('lazy');
+  });
 });

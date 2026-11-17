@@ -21,8 +21,12 @@ final class BranchAdminController extends AdminController
     #[Route('/{code}', name: 'admin_branch_update', requirements: ['code' => 'ICG|ICF|ICC|ICS'], methods: ['PUT'])]
     public function update(string $code, #[MapRequestPayload] BranchProfileInput $input, BranchProfileRepository $profiles, EntityManagerInterface $em): JsonResponse
     {
+        $body = $this->richText($input->content);
+        if ($body instanceof JsonResponse) {
+            return $body;
+        }
         $profile = $profiles->getOrCreate(Branch::from($code));
-        $profile->update(trim($input->intro), trim($input->body));
+        $profile->update(trim($input->intro), $body);
         $em->flush();
 
         return $this->json(Presenter::branchProfile($profile));

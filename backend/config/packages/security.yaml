@@ -44,7 +44,7 @@ security:
         - { path: ^/api/public/, roles: PUBLIC_ACCESS }
         - { path: ^/api/media/, roles: PUBLIC_ACCESS }
         - { path: ^/api/member/, roles: ROLE_MEMBER }
-        - { path: ^/api/admin/(news|gallery)(/|$), roles: ROLE_EDITOR }
+        - { path: ^/api/admin/(news|gallery|content-images)(/|$), roles: ROLE_EDITOR }
         - { path: ^/api/admin, roles: ROLE_ADMIN }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 

@@ -30,7 +30,7 @@ final class BranchZoneTest extends ApiTestCase
         self::assertResponseStatusCodeSame(422);
         $this->send('PUT', '/api/admin/branches/XYZ', ['intro' => 'x']);
         self::assertResponseStatusCodeSame(404);
-        $this->send('PUT', '/api/admin/branches/ICG', ['intro' => 'Nouvelle accroche', 'body' => 'Texte']);
+        $this->send('PUT', '/api/admin/branches/ICG', ['intro' => 'Nouvelle accroche', 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Texte']]]]]]);
         self::assertResponseIsSuccessful();
 
         $this->client->request('GET', '/api/public/branches');

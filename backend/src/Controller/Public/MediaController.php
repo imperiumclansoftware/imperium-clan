@@ -16,11 +16,12 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * Sert les images stockées hors de public/. Un fichier n'est servi que s'il est rattaché à un contenu
  * public (membre, image de galerie, couverture d'actualité publiée) ; les éditeurs voient aussi les
- * couvertures des brouillons.
+ * couvertures des brouillons. Les images des textes riches (« content ») sont publiques : leur nom UUID v4
+ * n'est pas devinable, et un texte en brouillon ne doit pas casser son aperçu.
  */
 final class MediaController extends AbstractController
 {
-    #[Route('/api/media/{folder}/{file}', name: 'media', requirements: ['folder' => 'avatars|gallery|news', 'file' => '[0-9a-f-]{36}\.(jpg|png|webp)'], methods: ['GET'])]
+    #[Route('/api/media/{folder}/{file}', name: 'media', requirements: ['folder' => 'avatars|gallery|news|content', 'file' => '[0-9a-f-]{36}\.(jpg|png|webp)'], methods: ['GET'])]
     public function show(
         string $folder,
         string $file,
@@ -31,6 +32,7 @@ final class MediaController extends AbstractController
     ): BinaryFileResponse {
         $visible = match ($folder) {
             'avatars' => null !== $members->findOneBy(['avatarFile' => $file]),
+            'content' => true,
             // Image d'un événement en brouillon : invisible du public, visible des éditeurs.
             'gallery' => $gallery->isPublicFile($file)
                 || ($this->isGranted('ROLE_EDITOR') && null !== $gallery->findOneBy(['file' => $file])),
@@ -48,7 +50,11 @@ final class MediaController extends AbstractController
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         // Les images peuvent être affichées par le front (même site) : CORP same-site au lieu de same-origin.
         $response->headers->set('Cross-Origin-Resource-Policy', 'same-site');
-        if ('avatars' === $folder) {
+        if ('content' === $folder) {
+            $response->setPublic();
+            $response->setMaxAge(31536000);
+            $response->setImmutable(); // nom unique : le fichier ne change jamais
+        } elseif ('avatars' === $folder) {
             $response->setPublic();
             $response->setMaxAge(86400);
         } else {

@@ -69,6 +69,21 @@ final class RichTextTest extends TestCase
         self::assertFalse(RichText::isEmpty(RichText::fromPlainText('texte')));
     }
 
+    public function testKeepsOnlyImagesUploadedOnTheSite(): void
+    {
+        $own = 'api/media/content/0b9a3c1e-5d7f-4a2b-9c8d-1e2f3a4b5c6d.webp';
+        $doc = RichText::normalize(['type' => 'doc', 'content' => [
+            ['type' => 'image', 'attrs' => ['src' => $own, 'alt' => "  Bannière\u{0007} du clan  ", 'title' => 'x', 'onerror' => 'alert(1)']],
+            ['type' => 'image', 'attrs' => ['src' => 'https://evil.example/pixel.png']],
+            ['type' => 'image', 'attrs' => ['src' => 'data:image/png;base64,AAAA']],
+            ['type' => 'image', 'attrs' => ['src' => 'api/media/content/../../config.php']],
+            ['type' => 'image', 'attrs' => ['src' => 'api/media/gallery/0b9a3c1e-5d7f-4a2b-9c8d-1e2f3a4b5c6d.webp']],
+        ]]);
+
+        self::assertSame([['type' => 'image', 'attrs' => ['src' => $own, 'alt' => 'Bannière du clan']]], $doc['content']);
+        self::assertFalse(RichText::isEmpty($doc), 'une image seule n’est pas un texte vide');
+    }
+
     /** @param array<mixed> $data */
     private static function at(array $data, string|int ...$path): mixed
     {

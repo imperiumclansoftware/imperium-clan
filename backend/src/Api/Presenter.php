@@ -47,7 +47,7 @@ final class Presenter
     {
         $b = $p->getBranch();
 
-        return ['code' => $b->value, 'name' => $b->label(), 'short' => $b->shortName(), 'intro' => $p->getIntro(), 'body' => $p->getBody()];
+        return ['code' => $b->value, 'name' => $b->label(), 'short' => $b->shortName(), 'intro' => $p->getIntro(), 'content' => RichText::decode($p->getBody())];
     }
 
     /** @return array<string, mixed> */
@@ -67,7 +67,7 @@ final class Presenter
     /** @return array<string, mixed> */
     public static function page(ClanPage $p, bool $admin = false): array
     {
-        $out = ['id' => (string) $p->getId(), 'slug' => $p->getSlug(), 'title' => $p->getTitle(), 'body' => $p->getBody()];
+        $out = ['id' => (string) $p->getId(), 'slug' => $p->getSlug(), 'title' => $p->getTitle(), 'content' => RichText::decode($p->getBody())];
 
         return $admin ? $out + ['position' => $p->getPosition(), 'published' => $p->isPublished()] : $out;
     }
@@ -101,7 +101,7 @@ final class Presenter
             'slug' => $e->getSlug(),
             'title' => $e->getTitle(),
             'date' => $e->getDate()->format('Y-m-d'),
-            'description' => $e->getDescription(),
+            'description' => RichText::decode($e->getDescription()),
             'branches' => Branch::toValues($e->getBranches()),
             'imageCount' => $imageCount,
             'coverUrl' => null === $cover ? null : self::media('gallery', $cover->getFile()),
@@ -159,7 +159,8 @@ final class Presenter
         return $admin ? $out + ['position' => $r->getPosition(), 'published' => $r->isPublished()] : $out;
     }
 
-    private static function media(string $folder, ?string $file): ?string
+    /** URL relative (sans / initial, comme tous les appels du front) d'une image servie par MediaController. */
+    public static function media(string $folder, ?string $file): ?string
     {
         return null === $file ? null : 'api/media/'.$folder.'/'.rawurlencode($file);
     }

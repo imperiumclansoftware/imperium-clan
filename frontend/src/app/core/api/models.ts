@@ -31,7 +31,8 @@ export interface ClanPage {
   readonly id: string;
   readonly slug: string;
   readonly title: string;
-  readonly body: string;
+  /** Texte riche (JSON de l'éditeur) ; un ancien texte simple arrive converti en paragraphes. */
+  readonly content: RichDoc;
 }
 
 export interface AdminClanPage extends ClanPage {
@@ -54,7 +55,7 @@ export interface News extends NewsSummary {
   readonly content: RichDoc;
 }
 
-/** Texte riche (JSON de l'éditeur Tiptap), nettoyé côté serveur par App\News\RichText. */
+/** Texte riche du site (JSON de l'éditeur Tiptap), nettoyé côté serveur par App\News\RichText. */
 export type RichMarkType = 'bold' | 'italic' | 'underline' | 'strike' | 'link';
 
 export interface RichMark {
@@ -64,7 +65,8 @@ export interface RichMark {
 
 export interface RichNode {
   readonly type: string;
-  readonly attrs?: { readonly level?: number };
+  /** level : intertitres ; src, alt : images (uniquement api/media/content/…, vérifié par le serveur) */
+  readonly attrs?: { readonly level?: number; readonly src?: string; readonly alt?: string };
   readonly content?: readonly RichNode[];
   readonly text?: string;
   readonly marks?: readonly RichMark[];
@@ -92,7 +94,8 @@ export interface GalleryEvent {
   readonly title: string;
   /** Date de l'événement, AAAA-MM-JJ. */
   readonly date: string;
-  readonly description: string;
+  /** Texte riche (JSON de l'éditeur), éventuellement vide. */
+  readonly description: RichDoc;
   readonly branches: readonly BranchCode[];
   readonly imageCount: number;
   readonly coverUrl: string | null;
@@ -110,7 +113,7 @@ export interface GalleryEventDetail extends GalleryEvent {
 export interface GalleryEventInput {
   title: string;
   date: string;
-  description: string;
+  description: RichDoc;
   branches: BranchCode[];
   published: boolean;
   coverImageId: string | null;
@@ -146,7 +149,7 @@ export interface ToolInput {
 export interface ClanPageInput {
   slug: string;
   title: string;
-  body: string;
+  content: RichDoc;
   position: number;
   published: boolean;
 }
@@ -200,5 +203,6 @@ export interface BranchProfile {
   readonly name: string;
   readonly short: string;
   readonly intro: string;
-  readonly body: string;
+  /** Présentation (texte riche), affichée sous l'accroche dans la zone de la branche. */
+  readonly content: RichDoc;
 }

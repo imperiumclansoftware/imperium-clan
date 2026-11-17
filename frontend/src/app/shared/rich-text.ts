@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RichDoc } from '../core/api/models';
 
 /**
- * Rendu du texte riche des actualités avec des templates Angular : aucun innerHTML, chaque nœud et
+ * Rendu du texte riche du site avec des templates Angular : aucun innerHTML, chaque nœud et
  * chaque marque de la liste blanche devient un élément. Les liens passent par le binding [href]
  * (assaini par Angular) et s'ouvrent dans un nouvel onglet sans transmettre l'origine.
  */
@@ -53,6 +53,11 @@ import { RichDoc } from '../core/api/models';
           }
           @case ('horizontalRule') {
             <hr />
+          }
+          @case ('image') {
+            <figure class="image">
+              <img [src]="n.attrs?.src" [alt]="n.attrs?.alt ?? ''" loading="lazy" />
+            </figure>
           }
         }
       }
@@ -158,6 +163,15 @@ import { RichDoc } from '../core/api/models';
       color: var(--imp-ivoire);
       text-decoration-color: var(--accent);
       text-underline-offset: 3px;
+    }
+    .texte-riche ::ng-deep figure.image {
+      margin: var(--imp-e-2) 0;
+    }
+    .texte-riche ::ng-deep figure.image img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      border-radius: var(--imp-rayon-m);
     }
     .texte-riche ::ng-deep hr {
       border: 0;

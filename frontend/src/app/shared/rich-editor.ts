@@ -6,17 +6,33 @@ import {
   OnDestroy,
   ViewEncapsulation,
   forwardRef,
+  inject,
   input,
   signal,
   viewChild,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { ChainedCommands, Editor, JSONContent } from '@tiptap/core';
+import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import StarterKit from '@tiptap/starter-kit';
+import { AdminApi } from '../core/api/admin-api';
+import { apiErrorMessage } from '../core/api/errors';
 import { RichDoc } from '../core/api/models';
 
 const EMPTY: RichDoc = { type: 'doc', content: [{ type: 'paragraph' }] };
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_IMAGE = 8 * 1024 * 1024;
+
+/**
+ * Images : uniquement celles envoyées sur le site. Une image collée depuis un autre site (balise <img>
+ * extérieure) n'est pas reprise : la CSP la bloquerait et le serveur la retirerait de toute façon.
+ */
+const SiteImage = Image.extend({
+  parseHTML() {
+    return [{ tag: 'img[src^="api/media/content/"]' }];
+  },
+}).configure({ inline: false, allowBase64: false });
 
 type Action =
   | 'bold'
@@ -32,7 +48,8 @@ type Action =
   | 'redo';
 
 /**
- * Éditeur WYSIWYG des actualités (Tiptap / ProseMirror). Le contenu circule en JSON, jamais en HTML :
+ * Éditeur WYSIWYG des textes du site (Tiptap / ProseMirror) : actualités, présentation du clan, branches,
+ * événements de la galerie. Le contenu circule en JSON, jamais en HTML :
  * compatible avec la CSP Trusted Types (pas de DOMParser ni d'injection de styles : injectCSS désactivé).
  * Seules les mises en forme acceptées par le serveur (App\News\RichText) sont proposées.
  */
@@ -93,8 +110,71 @@ type Action =
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
             </svg>
           </button>
+          @if (images()) {
+            <button
+              type="button"
+              class="outil"
+              [attr.aria-pressed]="isActive('image')"
+              aria-label="Image"
+              title="Image"
+              [disabled]="disabled()"
+              (click)="toggleImageForm()"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="m21 15-5-5L5 21" />
+              </svg>
+            </button>
+          }
         </div>
       </div>
+
+      @if (imageFormOpen()) {
+        <div class="lien-form image-form">
+          @if (!isActive('image')) {
+            <label [for]="editorId + '-image'">Image</label>
+            <input
+              [id]="editorId + '-image'"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              (change)="pickImage($event)"
+            />
+          }
+          <label [for]="editorId + '-alt'">Texte alternatif</label>
+          <input
+            #altInput
+            [id]="editorId + '-alt'"
+            type="text"
+            maxlength="200"
+            placeholder="Décris l’image (lu par les lecteurs d’écran)"
+            [value]="imageAlt()"
+            (keydown.enter)="$event.preventDefault(); applyImage(altInput.value)"
+            (keydown.escape)="imageFormOpen.set(false)"
+          />
+          <button
+            type="button"
+            class="btn btn-secondaire btn-petit"
+            [disabled]="imageBusy()"
+            (click)="applyImage(altInput.value)"
+          >
+            {{ isActive('image') ? 'Mettre à jour' : imageBusy() ? 'Envoi…' : 'Insérer' }}
+          </button>
+          @if (imageError()) {
+            <span class="erreur" role="alert">{{ imageError() }}</span>
+          }
+        </div>
+      }
 
       @if (linkFormOpen()) {
         <div class="lien-form">
@@ -250,6 +330,19 @@ type Action =
       color: var(--imp-ivoire);
       text-decoration-color: var(--accent);
     }
+    .editeur .ProseMirror img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      border-radius: var(--imp-rayon-m);
+    }
+    .editeur .ProseMirror img.ProseMirror-selectednode {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .editeur .image-form input[type='file'] {
+      min-height: 40px;
+    }
     .editeur .ProseMirror hr {
       border: 0;
       border-top: 1px solid var(--imp-trait);
@@ -273,7 +366,11 @@ type Action =
 })
 export class RichEditor implements ControlValueAccessor, AfterViewInit, OnDestroy {
   readonly label = input('Texte');
-  readonly placeholder = input('Écris ton actualité…');
+  readonly placeholder = input('Écris ton texte…');
+  /** Bouton « Image » (envoi d'images dans le texte, réservé aux éditeurs) */
+  readonly images = input(true);
+
+  private readonly api = inject(AdminApi);
 
   private readonly host = viewChild.required<ElementRef<HTMLDivElement>>('host');
   private editor: Editor | null = null;
@@ -288,6 +385,11 @@ export class RichEditor implements ControlValueAccessor, AfterViewInit, OnDestro
   protected readonly linkFormOpen = signal(false);
   protected readonly linkValue = signal('');
   protected readonly linkError = signal<string | null>(null);
+  protected readonly imageFormOpen = signal(false);
+  protected readonly imageAlt = signal('');
+  protected readonly imageBusy = signal(false);
+  protected readonly imageError = signal<string | null>(null);
+  private imageFile: File | null = null;
 
   protected readonly groups: readonly (readonly {
     action: Action;
@@ -336,6 +438,7 @@ export class RichEditor implements ControlValueAccessor, AfterViewInit, OnDestro
           },
         }),
         Placeholder.configure({ placeholder: this.placeholder() }),
+        SiteImage,
       ],
       editorProps: {
         attributes: {
@@ -373,7 +476,7 @@ export class RichEditor implements ControlValueAccessor, AfterViewInit, OnDestro
     this.editor?.setEditable(!disabled);
   }
 
-  protected isActive(action: Action | 'link'): boolean {
+  protected isActive(action: Action | 'link' | 'image'): boolean {
     this.version(); // dépendance : réévalué à chaque transaction
     const e = this.editor;
     if (!e) {
@@ -423,6 +526,7 @@ export class RichEditor implements ControlValueAccessor, AfterViewInit, OnDestro
     this.linkError.set(null);
     this.linkValue.set(open ? String(this.editor?.getAttributes('link')['href'] ?? '') : '');
     this.linkFormOpen.set(open);
+    this.imageFormOpen.set(false);
   }
 
   /** Applique (ou retire si vide) le lien sur la sélection. Mêmes protocoles que le serveur. */
@@ -448,6 +552,55 @@ export class RichEditor implements ControlValueAccessor, AfterViewInit, OnDestro
     }
     chain.setLink({ href }).run();
     this.linkFormOpen.set(false);
+  }
+
+  protected toggleImageForm(): void {
+    const open = !this.imageFormOpen();
+    this.imageFile = null;
+    this.imageError.set(null);
+    this.imageAlt.set(open ? String(this.editor?.getAttributes('image')['alt'] ?? '') : '');
+    this.imageFormOpen.set(open);
+    this.linkFormOpen.set(false);
+  }
+
+  protected pickImage(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
+    this.imageError.set(null);
+    if (file && (!IMAGE_TYPES.includes(file.type) || file.size > MAX_IMAGE)) {
+      this.imageError.set('Image JPEG, PNG ou WebP de 8 Mo maximum.');
+      this.imageFile = null;
+      return;
+    }
+    this.imageFile = file;
+  }
+
+  /** Image sélectionnée : met à jour son texte alternatif. Sinon : envoie le fichier puis l'insère. */
+  protected applyImage(alt: string): void {
+    const text = alt.trim();
+    if (this.isActive('image')) {
+      this.editor?.chain().focus().updateAttributes('image', { alt: text }).run();
+      this.imageFormOpen.set(false);
+      return;
+    }
+    if (!this.imageFile) {
+      this.imageError.set('Choisis une image.');
+      return;
+    }
+    this.imageBusy.set(true);
+    this.api.uploadContentImage(this.imageFile).subscribe({
+      next: ({ url }) => {
+        this.imageBusy.set(false);
+        // Insérée après la sélection, sans remplacer le texte sélectionné
+        const end = this.editor?.state.selection.to ?? 0;
+        this.editor?.chain().focus().setTextSelection(end).setImage({ src: url, alt: text }).run();
+        this.imageFile = null;
+        this.imageFormOpen.set(false);
+      },
+      error: (e: unknown) => {
+        this.imageBusy.set(false);
+        this.imageError.set(apiErrorMessage(e, 'Envoi de l’image impossible.'));
+      },
+    });
   }
 }
 

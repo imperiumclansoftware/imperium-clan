@@ -38,7 +38,11 @@ final class PageAdminController extends AdminController
         if (null !== $this->pages->findOneBy(['slug' => $input->slug])) {
             return $this->problem('Une section utilise déjà cet identifiant.', Response::HTTP_CONFLICT);
         }
-        $page = new ClanPage($input->slug, $input->title, $input->body, $input->position, $input->published);
+        $body = $this->richText($input->content);
+        if ($body instanceof JsonResponse) {
+            return $body;
+        }
+        $page = new ClanPage($input->slug, $input->title, $body, $input->position, $input->published);
         $this->em->persist($page);
         $this->em->flush();
 
@@ -52,7 +56,11 @@ final class PageAdminController extends AdminController
         if (null !== $other && !$other->getId()->equals($page->getId())) {
             return $this->problem('Une section utilise déjà cet identifiant.', Response::HTTP_CONFLICT);
         }
-        $page->update($input->slug, $input->title, $input->body, $input->position, $input->published);
+        $body = $this->richText($input->content);
+        if ($body instanceof JsonResponse) {
+            return $body;
+        }
+        $page->update($input->slug, $input->title, $body, $input->position, $input->published);
         $this->em->flush();
 
         return $this->json(Presenter::page($page, true));

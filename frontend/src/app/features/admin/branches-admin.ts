@@ -1,24 +1,26 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AdminApi } from '../../core/api/admin-api';
 import { apiErrorMessage } from '../../core/api/errors';
-import { BranchProfile } from '../../core/api/models';
+import { BranchProfile, RichDoc } from '../../core/api/models';
 import { PublicApi } from '../../core/api/public-api';
 import { BranchTheme } from '../../core/branch-theme';
 import { BranchCode, branchInfo } from '../../core/branches';
+import { RichEditor } from '../../shared/rich-editor';
 import { Sceau } from '../../shared/sceau';
 
 @Component({
   selector: 'app-branches-admin',
-  imports: [RouterLink, Sceau],
+  imports: [FormsModule, RouterLink, RichEditor, Sceau],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="pile entete">
       <p class="libelle">Administration</p>
       <h1>Branches</h1>
       <p class="secondaire">
-        Présentation affichée dans la zone de chaque branche. Texte simple : laisse une ligne vide
-        entre deux paragraphes.
+        Présentation affichée dans la zone de chaque branche : accroche courte, puis texte mis en
+        forme (intertitres, listes, liens, images).
       </p>
     </header>
 
@@ -28,7 +30,7 @@ import { Sceau } from '../../shared/sceau';
           class="carte branche"
           [style.--couleur]="color(p.code)"
           (focusin)="theme.set(p.code)"
-          (submit)="$event.preventDefault(); save(p, intro.value, body.value)"
+          (submit)="$event.preventDefault(); save(p, intro.value)"
         >
           <div class="ligne">
             <app-sceau [branches]="[p.code]" [size]="48" [decorative]="true" />
@@ -50,8 +52,14 @@ import { Sceau } from '../../shared/sceau';
             />
           </div>
           <div class="champ">
-            <label [for]="'b-' + p.code">Présentation</label>
-            <textarea #body [id]="'b-' + p.code" rows="6" maxlength="20000">{{ p.body }}</textarea>
+            <span class="etiquette">Présentation</span>
+            <app-rich-editor
+              [ngModel]="p.content"
+              (ngModelChange)="drafts.set(p.code, $event)"
+              [ngModelOptions]="{ standalone: true }"
+              [label]="'Présentation de la branche ' + p.name"
+              placeholder="Ce que fait la branche, comment la rejoindre…"
+            />
           </div>
           <div class="ligne">
             <button type="submit" class="btn btn-principal btn-petit">Enregistrer</button>
@@ -67,6 +75,10 @@ import { Sceau } from '../../shared/sceau';
     </div>
   `,
   styles: `
+    .etiquette {
+      font-weight: 600;
+      font-size: var(--imp-taille-s);
+    }
     .entete {
       margin-bottom: var(--imp-e-6);
     }
@@ -110,6 +122,8 @@ export class BranchesAdmin implements OnDestroy {
   protected readonly profiles = signal<BranchProfile[]>([]);
   protected readonly saved = signal<BranchCode | null>(null);
   protected readonly error = signal<{ code: BranchCode; message: string } | null>(null);
+  /** Présentation modifiée dans l'éditeur, par branche, en attendant l'enregistrement */
+  protected readonly drafts = new Map<BranchCode, RichDoc>();
 
   constructor() {
     inject(PublicApi)
@@ -125,10 +139,12 @@ export class BranchesAdmin implements OnDestroy {
     return branchInfo(code).color;
   }
 
-  protected save(p: BranchProfile, intro: string, body: string): void {
+  protected save(p: BranchProfile, intro: string): void {
     this.error.set(null);
-    this.admin.updateBranch(p.code, { intro, body }).subscribe({
+    const content = this.drafts.get(p.code) ?? p.content;
+    this.admin.updateBranch(p.code, { intro, content }).subscribe({
       next: (updated) => {
+        this.drafts.delete(updated.code);
         this.profiles.update((list) => list.map((x) => (x.code === updated.code ? updated : x)));
         this.saved.set(updated.code);
       },

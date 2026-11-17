@@ -16,7 +16,8 @@ import { backgroundUrl } from '../../core/backgrounds';
 import { BranchTheme } from '../../core/branch-theme';
 import { BRANCHES, BranchCode, BranchInfo } from '../../core/branches';
 import { NewsCard } from '../../shared/news-card';
-import { ParagraphsPipe } from '../../shared/paragraphs';
+import { RichText } from '../../shared/rich-text';
+import { isRichEmpty } from '../../core/rich';
 import { remote } from '../../shared/remote';
 import { Sceau } from '../../shared/sceau';
 import { ToolCard } from '../../shared/tool-card';
@@ -27,7 +28,7 @@ import { ToolCard } from '../../shared/tool-card';
  */
 @Component({
   selector: 'app-branch-zone',
-  imports: [RouterLink, RouterLinkActive, Sceau, ToolCard, NewsCard, ParagraphsPipe],
+  imports: [RouterLink, RouterLinkActive, Sceau, ToolCard, NewsCard, RichText],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- Fonds des branches superposés : celui de la branche active apparaît en fondu (même durée que la couleur). -->
@@ -85,14 +86,12 @@ import { ToolCard } from '../../shared/tool-card';
           </div>
         </section>
 
-        @if (profile()?.body) {
-          <section class="section texte-branche" aria-label="Présentation">
-            <div class="texte">
-              @for (para of profile()?.body | paragraphs; track $index) {
-                <p>{{ para }}</p>
-              }
-            </div>
-          </section>
+        @if (profile(); as pr) {
+          @if (!isEmpty(pr.content)) {
+            <section class="section texte-branche" aria-label="Présentation">
+              <app-rich-text [doc]="pr.content" />
+            </section>
+          }
         }
 
         <section class="section" aria-labelledby="titre-membres">
@@ -328,6 +327,7 @@ export class BranchZone implements OnDestroy {
   readonly code = input.required<string>();
 
   protected readonly branches = BRANCHES;
+  protected readonly isEmpty = isRichEmpty;
   protected readonly branch = computed<BranchInfo | null>(
     () => BRANCHES.find((b) => b.code === this.code().toUpperCase()) ?? null,
   );

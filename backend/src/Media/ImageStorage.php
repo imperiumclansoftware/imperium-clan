@@ -18,7 +18,7 @@ final readonly class ImageStorage
 {
     public const array ALLOWED_MIME = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
     public const string MAX_SIZE = '8M';
-    public const array FOLDERS = ['avatars', 'gallery', 'news'];
+    public const array FOLDERS = ['avatars', 'gallery', 'news', 'content'];
 
     public function __construct(
         #[Autowire('%kernel.project_dir%/var/uploads')]

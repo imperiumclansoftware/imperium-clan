@@ -14,8 +14,10 @@ import { AdminApi } from '../../core/api/admin-api';
 import { apiErrorMessage } from '../../core/api/errors';
 import { AdminGalleryEvent, GalleryImage } from '../../core/api/models';
 import { BranchCode } from '../../core/branches';
+import { EMPTY_DOC } from '../../core/rich';
 import { BranchPicker } from '../../shared/branch-picker';
 import { DropZone } from '../../shared/drop-zone';
+import { RichEditor } from '../../shared/rich-editor';
 
 /** Mêmes règles que le serveur (ImageStorage) : vérification indicative, le serveur reste seul juge. */
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -37,7 +39,7 @@ interface UploadItem {
 
 @Component({
   selector: 'app-gallery-admin',
-  imports: [DatePipe, ReactiveFormsModule, BranchPicker, DropZone],
+  imports: [DatePipe, ReactiveFormsModule, BranchPicker, DropZone, RichEditor],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="pile entete">
@@ -114,13 +116,15 @@ interface UploadItem {
               </div>
             </div>
             <div class="champ">
-              <label for="e-desc">Description <span class="secondaire">(facultatif)</span></label>
-              <textarea
-                id="e-desc"
+              <span class="etiquette"
+                >Description <span class="secondaire">(facultatif)</span></span
+              >
+              <app-rich-editor
                 formControlName="description"
-                rows="3"
-                maxlength="5000"
-              ></textarea>
+                label="Description de l’événement"
+                placeholder="Raconte l’événement…"
+                class="editeur-court"
+              />
             </div>
             <app-branch-picker
               formControlName="branches"
@@ -305,6 +309,14 @@ interface UploadItem {
     </div>
   `,
   styles: `
+    .etiquette {
+      font-weight: 600;
+      font-size: var(--imp-taille-s);
+    }
+    /* Description d'événement : zone de saisie moins haute que pour un article */
+    .editeur-court ::ng-deep .ProseMirror {
+      min-height: 140px;
+    }
     .entete {
       margin-bottom: var(--imp-e-6);
     }
@@ -543,7 +555,7 @@ export class GalleryAdmin {
   protected readonly form = inject(FormBuilder).nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(120)]],
     date: [today(), Validators.required],
-    description: [''],
+    description: [EMPTY_DOC],
     branches: [[] as BranchCode[]],
     published: [false],
   });
@@ -562,7 +574,7 @@ export class GalleryAdmin {
         this.form.reset({
           title: '',
           date: today(),
-          description: '',
+          description: EMPTY_DOC,
           branches: [],
           published: false,
         });

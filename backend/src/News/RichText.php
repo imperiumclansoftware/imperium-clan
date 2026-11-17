@@ -5,15 +5,19 @@ declare(strict_types=1);
 namespace App\News;
 
 /**
- * Texte riche des actualités, au format JSON de l'éditeur (ProseMirror / Tiptap), jamais en HTML.
+ * Texte riche du site (actualités, présentation du clan, branches, événements de la galerie), au format
+ * JSON de l'éditeur (ProseMirror / Tiptap), jamais en HTML.
  *
  * normalize() reconstruit un document PROPRE à partir de la saisie : seuls les nœuds, marques et attributs
- * de la liste blanche sont gardés, les liens n'acceptent que http(s) et mailto. Le front rend ce JSON avec
- * des templates Angular, sans injection de HTML : pas de XSS possible par construction.
+ * de la liste blanche sont gardés, les liens n'acceptent que http(s) et mailto, les images uniquement les
+ * fichiers envoyés sur le site (api/media/content/…). Le front rend ce JSON avec des templates Angular,
+ * sans injection de HTML : pas de XSS possible par construction.
  */
 final class RichText
 {
-    private const array BLOCKS = ['paragraph', 'heading', 'bulletList', 'orderedList', 'listItem', 'blockquote', 'horizontalRule'];
+    private const array BLOCKS = ['paragraph', 'heading', 'bulletList', 'orderedList', 'listItem', 'blockquote', 'horizontalRule', 'image'];
+    /** Images des textes : uniquement celles envoyées sur le site (ContentImageController). */
+    public const string IMAGE_SRC = '#^api/media/content/[0-9a-f-]{36}\.(jpg|png|webp)$#';
     private const array INLINE = ['text', 'hardBreak'];
     private const array MARKS = ['bold', 'italic', 'underline', 'strike', 'link'];
     private const int MAX_DEPTH = 12;
@@ -77,16 +81,47 @@ final class RichText
         return self::fromPlainText($stored);
     }
 
+    /**
+     * Saisie de l'éditeur → document nettoyé et sérialisé pour le stockage.
+     *
+     * @param array<mixed> $input document de l'éditeur ; tableau vide = texte vide
+     *
+     * @throws \InvalidArgumentException document trop gros ou trop profond
+     */
+    public static function fromInput(array $input): string
+    {
+        return self::encode(self::normalize($input));
+    }
+
     /** @param array<mixed> $doc */
     public static function encode(array $doc): string
     {
         return json_encode($doc, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES);
     }
 
-    /** @param array<mixed> $doc */
+    /**
+     * Vide : ni texte ni image.
+     *
+     * @param array<mixed> $doc
+     */
     public static function isEmpty(array $doc): bool
     {
-        return '' === trim(self::plainText($doc));
+        return '' === trim(self::plainText($doc)) && !self::hasImage($doc);
+    }
+
+    /** @param array<mixed> $node */
+    private static function hasImage(array $node): bool
+    {
+        if ('image' === ($node['type'] ?? null)) {
+            return true;
+        }
+        foreach ((array) ($node['content'] ?? []) as $child) {
+            if (\is_array($child) && self::hasImage($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @param array<mixed> $node */
@@ -148,6 +183,7 @@ final class RichText
         return match ($type) {
             'text' => $this->text($n),
             'hardBreak', 'horizontalRule' => ['type' => $type],
+            'image' => self::image($attrs),
             'paragraph' => $this->withContent(['type' => 'paragraph'], $n, $depth, self::INLINE),
             'heading' => $this->withContent(['type' => 'heading', 'attrs' => ['level' => 3 === ($attrs['level'] ?? null) ? 3 : 2]], $n, $depth, self::INLINE),
             'bulletList', 'orderedList' => $this->nonEmpty($this->withContent(['type' => $type], $n, $depth, ['listItem'])),
@@ -214,6 +250,22 @@ final class RichText
         }
 
         return [] === $marks ? ['type' => 'text', 'text' => $text] : ['type' => 'text', 'text' => $text, 'marks' => $marks];
+    }
+
+    /**
+     * @param array<mixed> $attrs
+     *
+     * @return array{type: 'image', attrs: array{src: string, alt: string}}|null
+     */
+    private static function image(array $attrs): ?array
+    {
+        $src = $attrs['src'] ?? null;
+        if (!\is_string($src) || !preg_match(self::IMAGE_SRC, $src)) {
+            return null; // image extérieure, data: ou chemin inconnu : ignorée
+        }
+        $alt = \is_string($attrs['alt'] ?? null) ? mb_substr(trim((string) preg_replace('/[\x00-\x1F\x7F]/u', '', $attrs['alt'])), 0, 200) : '';
+
+        return ['type' => 'image', 'attrs' => ['src' => $src, 'alt' => $alt]];
     }
 
     /** Lien accepté : http(s) ou mailto, sans espace ni caractère de contrôle. */

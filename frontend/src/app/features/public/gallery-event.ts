@@ -8,7 +8,8 @@ import { GalleryEventDetail } from '../../core/api/models';
 import { PublicApi } from '../../core/api/public-api';
 import { BranchPills } from '../../shared/branch-pills';
 import { GalleryGrid } from '../../shared/gallery-grid';
-import { ParagraphsPipe } from '../../shared/paragraphs';
+import { RichText } from '../../shared/rich-text';
+import { isRichEmpty } from '../../core/rich';
 
 type State =
   | { state: 'loading' }
@@ -18,7 +19,7 @@ type State =
 
 @Component({
   selector: 'app-gallery-event',
-  imports: [RouterLink, DatePipe, BranchPills, GalleryGrid, ParagraphsPipe],
+  imports: [RouterLink, DatePipe, BranchPills, GalleryGrid, RichText],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="conteneur">
@@ -41,12 +42,8 @@ type State =
           @if (e.value.branches.length) {
             <app-branch-pills [branches]="e.value.branches" format="moyen" />
           }
-          @if (e.value.description) {
-            <div class="texte">
-              @for (para of e.value.description | paragraphs; track $index) {
-                <p class="secondaire">{{ para }}</p>
-              }
-            </div>
+          @if (!isEmpty(e.value.description)) {
+            <app-rich-text [doc]="e.value.description" />
           }
         </header>
         @if (e.value.images.length) {
@@ -75,6 +72,7 @@ type State =
   `,
 })
 export class GalleryEventPage {
+  protected readonly isEmpty = isRichEmpty;
   private readonly api = inject(PublicApi);
   readonly slug = input.required<string>();
 

@@ -2,14 +2,14 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { PublicApi } from '../../core/api/public-api';
 import { BRANCHES } from '../../core/branches';
-import { ParagraphsPipe } from '../../shared/paragraphs';
+import { RichText } from '../../shared/rich-text';
 import { remote } from '../../shared/remote';
 import { Sceau } from '../../shared/sceau';
 import { Status } from '../../shared/status';
 
 @Component({
   selector: 'app-clan',
-  imports: [RouterLink, ParagraphsPipe, Sceau, Status],
+  imports: [RouterLink, RichText, Sceau, Status],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="conteneur">
@@ -36,11 +36,7 @@ import { Status } from '../../shared/status';
             @for (page of p.value; track page.id) {
               <section class="carte" [id]="page.slug" [attr.aria-labelledby]="'titre-' + page.slug">
                 <h2 class="gothique" [id]="'titre-' + page.slug">{{ page.title }}</h2>
-                <div class="texte">
-                  @for (para of page.body | paragraphs; track $index) {
-                    <p>{{ para }}</p>
-                  }
-                </div>
+                <app-rich-text [doc]="page.content" />
               </section>
             }
           </div>

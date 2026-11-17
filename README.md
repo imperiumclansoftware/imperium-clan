@@ -13,12 +13,17 @@ Portail public du clan Imperium et son administration.
   clan est celui de tout le site public (`PublicLayout`, page de connexion) ; dans une zone de branche il
   s'efface en fondu au profit du fond de la branche. Le générateur de bannières propose aussi ces fonds
   (choix du fond, voile sombre pour la lisibilité). Pour en remplacer un : même nom, même ratio.
-- **Actualités** : texte saisi dans un éditeur WYSIWYG (Tiptap 3, `shared/rich-editor.ts`) et stocké en
-  **JSON** (jamais en HTML). Le serveur reconstruit le document par liste blanche (`App\News\RichText` :
-  intertitres, gras, italique, souligné, barré, listes, citations, liens http(s)/mailto) ; le site le rend avec
-  des templates Angular (`shared/rich-text.ts`), sans innerHTML. Compatible CSP Trusted Types (`injectCSS`
-  désactivé, politique `ProseMirrorClipboard` autorisée pour le collage). Image d'illustration au format 16:9 ;
-  sans image, illustration de remplacement : fond de la branche (ou fond clan) + sceau (`shared/news-illustration.ts`).
+- **Textes riches** (actualités, sections de la présentation du clan, présentation des branches, description
+  des événements de la galerie) : saisis dans un éditeur WYSIWYG (Tiptap 3, `shared/rich-editor.ts`) et stockés
+  en **JSON** (jamais en HTML). Le serveur reconstruit le document par liste blanche (`App\News\RichText` :
+  intertitres, gras, italique, souligné, barré, listes, citations, liens http(s)/mailto, **images envoyées sur
+  le site** avec texte alternatif) ; le site le rend avec des templates Angular (`shared/rich-text.ts`), sans
+  innerHTML. Les anciens textes simples sont lus comme des paragraphes (pas de migration). Compatible CSP Trusted
+  Types (`injectCSS` désactivé, politique `ProseMirrorClipboard` autorisée pour le collage ; les images collées
+  depuis un autre site sont ignorées). Restent en texte simple : l'accroche des branches, la description des
+  outils (la carte entière est un lien) et celle des ressources.
+- **Actualités** : image d'illustration au format 16:9 ; sans image, illustration de remplacement : fond de la
+  branche (ou fond clan) + sceau (`shared/news-illustration.ts`).
 - **Espace membre** (`/ressources`, connexion requise) : ressources téléchargeables (logos, visuels) et
   générateurs de bannières (Facebook, X) avec le pseudo et le sceau des branches du membre, dessinés dans le
   navigateur (`features/member/banner.ts` : ajouter un format = une ligne dans `BANNER_FORMATS`).
@@ -77,6 +82,7 @@ Si Docker tourne sur un autre hôte, surcharge `DATABASE_URL` dans `backend/.env
 | `GET /api/setup`, `POST /api/setup` | public ; création du premier administrateur, uniquement sans compte existant et avec le jeton d'installation |
 | `GET /api/member/resources`, `…/{id}/file` | `ROLE_MEMBER` ; SVG, PDF, ZIP toujours en pièce jointe + CSP `sandbox` |
 | `/api/admin/news`, `/api/admin/gallery` | `ROLE_EDITOR` |
+| `POST /api/admin/content-images` | `ROLE_EDITOR` ; image insérée dans un texte riche → `{url, width, height}` (servie publiquement par `/api/media/content/…`) |
 | `/api/admin/{tools,pages,members,join-requests,resources}` | `ROLE_ADMIN` |
 
 Rôles : `ROLE_ADMIN` ⊃ `ROLE_EDITOR` ⊃ `ROLE_MEMBER`.
@@ -135,7 +141,11 @@ purge quotidienne). Hors Docker :
 - Pas de Voter par ressource : aucun contenu n'a de propriétaire, l'accès est uniquement fonction du rôle
   (`access_control` + `#[IsGranted]`). Un Voter sera ajouté si un contenu devient « propriétaire »
   (ex. : un éditeur limité à ses propres actualités).
-- Textes saisis en texte brut, découpés en paragraphes côté Angular : aucun HTML n'est interprété.
+- Textes riches en JSON filtré par liste blanche et rendus par des templates Angular : aucun HTML n'est
+  interprété.
+- Images des textes riches (`/api/media/content/…`) servies **sans contrôle de publication** : leur nom (UUID v4)
+  n'est pas devinable, et l'aperçu d'un brouillon doit fonctionner. Une image envoyée pour un texte jamais
+  publié reste donc lisible par qui en connaît l'adresse.
 
 ## Vérifications
 

@@ -44,9 +44,13 @@ final class GalleryEventAdminController extends AdminController
     #[Route('', name: 'admin_gallery_event_create', methods: ['POST'])]
     public function create(#[MapRequestPayload] GalleryEventInput $input): JsonResponse
     {
+        $description = $this->richText($input->description);
+        if ($description instanceof JsonResponse) {
+            return $description;
+        }
         $slug = Slugs::unique($input->title.' '.$input->dateValue()->format('Y'), fn (string $s): bool => null !== $this->events->findOneBy(['slug' => $s]), 'evenement');
         $event = new GalleryEvent($slug, trim($input->title), $input->dateValue());
-        $event->update(trim($input->title), $input->dateValue(), trim($input->description), $input->published);
+        $event->update(trim($input->title), $input->dateValue(), $description, $input->published);
         $event->setBranches(BranchList::parse($input->branches));
         $this->em->persist($event);
         $this->em->flush();
@@ -65,7 +69,11 @@ final class GalleryEventAdminController extends AdminController
                 return $this->problem('La couverture doit être une image de l’événement.', Response::HTTP_UNPROCESSABLE_ENTITY);
             }
         }
-        $event->update(trim($input->title), $input->dateValue(), trim($input->description), $input->published);
+        $description = $this->richText($input->description);
+        if ($description instanceof JsonResponse) {
+            return $description;
+        }
+        $event->update(trim($input->title), $input->dateValue(), $description, $input->published);
         $event->setBranches(BranchList::parse($input->branches));
         $event->setCover($cover);
         $this->em->flush();

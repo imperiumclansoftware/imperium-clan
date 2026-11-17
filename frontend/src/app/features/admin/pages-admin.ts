@@ -3,18 +3,19 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AdminApi } from '../../core/api/admin-api';
 import { apiErrorMessage } from '../../core/api/errors';
 import { AdminClanPage } from '../../core/api/models';
+import { EMPTY_DOC } from '../../core/rich';
+import { RichEditor } from '../../shared/rich-editor';
 
 @Component({
   selector: 'app-pages-admin',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RichEditor],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="pile entete">
       <p class="libelle">Administration</p>
       <h1>Présentation du clan</h1>
       <p class="secondaire">
-        Sections de la page « Le clan ». Texte simple : laisse une ligne vide entre deux
-        paragraphes.
+        Sections de la page « Le clan » : intertitres, mises en forme, listes, liens et images.
       </p>
     </header>
 
@@ -64,8 +65,12 @@ import { AdminClanPage } from '../../core/api/models';
           </p>
         </div>
         <div class="champ">
-          <label for="p-body">Texte</label
-          ><textarea id="p-body" formControlName="body" rows="12" maxlength="20000"></textarea>
+          <span class="etiquette">Texte</span>
+          <app-rich-editor
+            formControlName="content"
+            label="Texte de la section"
+            placeholder="Présente le clan…"
+          />
         </div>
         <div class="champ">
           <label for="p-pos">Ordre d’affichage</label
@@ -99,11 +104,15 @@ import { AdminClanPage } from '../../core/api/models';
     }
     @media (min-width: 1100px) {
       .disposition {
-        grid-template-columns: 1fr 520px;
+        grid-template-columns: 320px 1fr;
       }
     }
     .formulaire {
       gap: var(--imp-e-4);
+    }
+    .etiquette {
+      font-weight: 600;
+      font-size: var(--imp-taille-s);
     }
   `,
 })
@@ -116,7 +125,7 @@ export class PagesAdmin {
   protected readonly form = inject(FormBuilder).nonNullable.group({
     slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)]],
     title: ['', Validators.required],
-    body: [''],
+    content: [EMPTY_DOC],
     position: [0],
     published: [true],
   });
@@ -131,7 +140,7 @@ export class PagesAdmin {
     this.form.setValue({
       slug: page.slug,
       title: page.title,
-      body: page.body,
+      content: page.content,
       position: page.position,
       published: page.published,
     });
@@ -140,7 +149,7 @@ export class PagesAdmin {
   protected reset(): void {
     this.editing.set(null);
     this.error.set(null);
-    this.form.reset();
+    this.form.reset({ slug: '', title: '', content: EMPTY_DOC, position: 0, published: true });
   }
 
   protected save(): void {

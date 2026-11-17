@@ -5,6 +5,7 @@ import {
   AdminClanPage,
   AdminGalleryEvent,
   GalleryEventInput,
+  RichDoc,
   BranchProfile,
   AdminMember,
   AdminResource,
@@ -71,6 +72,15 @@ export class AdminApi {
   }
   updateNews(newsId: string, input: NewsInput): Observable<News> {
     return this.http.put<News>(`api/admin/news/${id(newsId)}`, input);
+  }
+  /** Image insérée dans un texte riche : renvoie son URL (api/media/content/…). */
+  uploadContentImage(file: File): Observable<{ url: string; width: number; height: number }> {
+    const body = new FormData();
+    body.append('file', file);
+    return this.http.post<{ url: string; width: number; height: number }>(
+      'api/admin/content-images',
+      body,
+    );
   }
   uploadCover(newsId: string, file: File): Observable<News> {
     const body = new FormData();
@@ -152,7 +162,10 @@ export class AdminApi {
   }
 
   // Présentation des branches
-  updateBranch(code: string, input: { intro: string; body: string }): Observable<BranchProfile> {
+  updateBranch(
+    code: string,
+    input: { intro: string; content: RichDoc },
+  ): Observable<BranchProfile> {
     return this.http.put<BranchProfile>(`api/admin/branches/${id(code)}`, input);
   }
 

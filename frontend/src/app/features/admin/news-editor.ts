@@ -14,14 +14,14 @@ import { Router, RouterLink } from '@angular/router';
 import { Observable, of, switchMap } from 'rxjs';
 import { AdminApi } from '../../core/api/admin-api';
 import { apiErrorMessage, atomToLocalInput, localInputToAtom } from '../../core/api/errors';
-import { News, RichDoc, RichNode } from '../../core/api/models';
+import { News } from '../../core/api/models';
+import { EMPTY_DOC, isRichEmpty } from '../../core/rich';
 import { BranchCode } from '../../core/branches';
 import { BranchPicker } from '../../shared/branch-picker';
 import { DropZone } from '../../shared/drop-zone';
 import { NewsIllustration } from '../../shared/news-illustration';
 import { RichEditor } from '../../shared/rich-editor';
 
-const EMPTY_DOC: RichDoc = { type: 'doc', content: [{ type: 'paragraph' }] };
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_IMAGE = 8 * 1024 * 1024;
 
@@ -57,8 +57,8 @@ const MAX_IMAGE = 8 * 1024 * 1024;
           <span class="etiquette" id="n-content-label">Texte</span>
           <app-rich-editor formControlName="content" label="Texte de l’actualité" />
           <p class="aide">
-            Intertitres, gras, italique, listes, citations et liens. Le collage depuis un autre site
-            ne garde que ces mises en forme.
+            Intertitres, gras, italique, listes, citations, liens et images. Le collage depuis un
+            autre site ne garde que ces mises en forme.
           </p>
         </div>
       </div>
@@ -227,7 +227,7 @@ export class NewsEditor implements OnInit {
   private readonly contentValue = toSignal(this.form.controls.content.valueChanges, {
     initialValue: EMPTY_DOC,
   });
-  protected readonly isEmpty = computed(() => !hasText(this.contentValue().content));
+  protected readonly isEmpty = computed(() => isRichEmpty(this.contentValue()));
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.clearPending());
@@ -351,10 +351,4 @@ export class NewsEditor implements OnInit {
     this.pendingPreview.set(null);
     this.pendingFile = null;
   }
-}
-
-function hasText(nodes: readonly RichNode[] | undefined): boolean {
-  return (nodes ?? []).some(
-    (n) => (n.type === 'text' && (n.text ?? '').trim() !== '') || hasText(n.content),
-  );
 }
