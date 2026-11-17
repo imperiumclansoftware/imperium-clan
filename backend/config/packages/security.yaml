@@ -41,6 +41,7 @@ security:
         - { path: ^/api/health$, roles: PUBLIC_ACCESS }
         - { path: ^/api/session$, roles: PUBLIC_ACCESS }
         - { path: ^/api/setup$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/conclave(/callback)?$, roles: PUBLIC_ACCESS }
         - { path: ^/api/public/, roles: PUBLIC_ACCESS }
         - { path: ^/api/media/, roles: PUBLIC_ACCESS }
         - { path: ^/api/member/, roles: ROLE_MEMBER }

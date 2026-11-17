@@ -1,7 +1,7 @@
 # ADR 0003 — Connexion à l'administration par SSO Conclave (OpenID Connect)
 
-- Statut : proposé
-- Date : 2026-11-10
+- Statut : accepté — implémenté en portail 0.2.0 / Conclave 0.8.0 (ADR 0002 de Conclave)
+- Date : 2026-11-10 (mise en œuvre le 2026-11-17)
 
 ## Contexte
 Le portail Imperium Clan a une partie publique et une administration. Les administrateurs sont des
@@ -32,3 +32,18 @@ Conclave resterait admin du portail).
 - Travail à faire dans Conclave (bundle, écran de consentement, enregistrement du client, tests).
 - Avenger pourra réutiliser le même fournisseur plus tard.
 - La disponibilité de l'admin du portail dépend de Conclave ; la partie publique n'en dépend pas.
+
+## Mise en œuvre (2026-11-17)
+
+- **Tous les membres** se connectent avec Conclave, pas seulement les administrateurs : bouton « Se connecter
+  avec Conclave » sur `/connexion` (`GET /api/auth/conclave` → Conclave → `GET /api/auth/conclave/callback`).
+- Flux *authorization code* + **PKCE S256**, `state` et `nonce` en session ; jeton d'identité RS256 vérifié avec
+  la JWKS de Conclave (émetteur = `CONCLAVE_URL`, audience = `CONCLAVE_CLIENT_ID`, dates, nonce). Même client
+  OAuth que la synchronisation des membres (portées `portal:members openid profile`).
+- Compte créé à la première connexion (`app_user` sans e-mail ni mot de passe, `conclave_sub` = `sub`, le même
+  que l'export des membres). **Droits recalculés à chaque connexion** : membre → `ROLE_MEMBER` ; branche
+  Communication (blason `communicants`) → `ROLE_EDITOR` (actualités pour toutes les branches) ;
+  `ROLE_ADMIN` uniquement s'il a été donné dans **Administration → Comptes** (conservé ensuite).
+- Garde-fous : on ne se retire pas soi-même le rôle d'administrateur, et il reste toujours au moins un
+  administrateur. Les comptes locaux (page `/installation`, `app:user:create`) restent le secours.
+

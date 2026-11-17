@@ -49,8 +49,18 @@ abstract class ApiTestCase extends WebTestCase
     /** @param array<mixed> $payload */
     protected function send(string $method, string $uri, array $payload = []): void
     {
-        $this->client->getCookieJar()->set(new Cookie(CsrfDoubleSubmitSubscriber::COOKIE, 'tok'));
-        $this->client->jsonRequest($method, $uri, $payload, ['HTTP_X_XSRF_TOKEN' => 'tok']);
+        // Jeton déjà posé par une réponse précédente : on le réutilise (deux cookies XSRF se contrediraient)
+        $token = null;
+        foreach ($this->client->getCookieJar()->all() as $cookie) {
+            if (CsrfDoubleSubmitSubscriber::COOKIE === $cookie->getName()) {
+                $token = $cookie->getValue();
+            }
+        }
+        if (null === $token) {
+            $token = 'tok';
+            $this->client->getCookieJar()->set(new Cookie(CsrfDoubleSubmitSubscriber::COOKIE, $token));
+        }
+        $this->client->jsonRequest($method, $uri, $payload, ['HTTP_X_XSRF_TOKEN' => $token]);
     }
 
     /** @return array<mixed> */

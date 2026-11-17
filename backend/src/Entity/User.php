@@ -33,9 +33,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 64, unique: true, nullable: true)]
     private ?string $conclaveSub = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastLoginAt = null;
+
     public function __construct(
-        #[ORM\Column(length: 180, unique: true)]
-        private string $email,
+        /** Comptes locaux (secours) ; null pour un compte connecté avec Conclave (ADR 0003). */
+        #[ORM\Column(length: 180, unique: true, nullable: true)]
+        private ?string $email,
         /** Nom affiché publiquement (auteur des actualités). Jamais l'e-mail. */
         #[ORM\Column(length: 80)]
         private string $displayName,
@@ -49,9 +53,38 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->id;
     }
 
-    public function getEmail(): string
+    /** Compte créé par la connexion avec Conclave : pas d'e-mail ni de mot de passe. */
+    public static function fromConclave(string $sub, string $displayName): self
+    {
+        $user = new self(null, $displayName);
+        $user->conclaveSub = $sub;
+
+        return $user;
+    }
+
+    public function getEmail(): ?string
     {
         return $this->email;
+    }
+
+    public function isConclaveAccount(): bool
+    {
+        return null === $this->email && null !== $this->conclaveSub;
+    }
+
+    public function setDisplayName(string $displayName): void
+    {
+        $this->displayName = $displayName;
+    }
+
+    public function getLastLoginAt(): ?\DateTimeImmutable
+    {
+        return $this->lastLoginAt;
+    }
+
+    public function markLoggedIn(): void
+    {
+        $this->lastLoginAt = new \DateTimeImmutable();
     }
 
     public function getConclaveSub(): ?string
@@ -69,12 +102,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->displayName;
     }
 
-    /** @return non-empty-string */
+    /**
+     * E-mail pour un compte local ; « conclave:<sub> » pour un compte Conclave (jamais utilisable par le
+     * formulaire de connexion, qui cherche un e-mail).
+     *
+     * @return non-empty-string
+     */
     public function getUserIdentifier(): string
     {
-        \assert('' !== $this->email);
+        $identifier = $this->email ?? 'conclave:'.$this->conclaveSub;
+        \assert('' !== $identifier);
 
-        return $this->email;
+        return $identifier;
     }
 
     /** @return list<string> */

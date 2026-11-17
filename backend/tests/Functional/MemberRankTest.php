@@ -21,7 +21,6 @@ final class MemberRankTest extends ApiTestCase
         $this->client->request('GET', '/api/public/members');
         self::assertSame(['membre', 'membre'], array_column($this->items(), 'rank'));
 
-        $this->client->getCookieJar()->clear(); // cookie XSRF réel posé par la requête publique
         $this->client->loginUser($this->user('ROLE_ADMIN', 'admin@example.test'));
         $this->send('PUT', '/api/admin/members/'.$aquila->getId().'/rank', ['rank' => 'officier']);
         self::assertResponseIsSuccessful();

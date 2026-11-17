@@ -95,13 +95,31 @@ docker run -d --name imperium-clan \
 
 Le domaine doit pointer vers la machine. Les certificats (Let's Encrypt) sont conservés dans le volume `/data`.
 
+## Connexion avec Conclave
+
+Les membres se connectent au portail **avec leur compte Conclave** (Conclave ≥ 0.8.0). Leurs droits viennent de
+Conclave à chaque connexion : espace membre pour tous, publication des actualités pour la branche Communication.
+Les administrateurs du portail se désignent dans **Administration → Comptes**.
+
+1. Dans Conclave, ajoutez la connexion au client du portail (le secret ne change pas) :
+   ```bash
+   docker exec -it conclave-conclave-1 php bin/console app:oauth:client:update <n°> \
+     --scope=portal:members --scope=openid --scope=profile \
+     --redirect-uri=https://portail.exemple.fr/api/auth/conclave/callback
+   ```
+2. Dans la stack du portail : `APP_URL=https://portail.exemple.fr` (même adresse), avec `CONCLAVE_URL`,
+   `CONCLAVE_CLIENT_ID` et `CONCLAVE_CLIENT_SECRET` déjà utilisés pour la synchronisation des membres.
+
+Le bouton « Se connecter avec Conclave » apparaît alors sur `/connexion`. Le compte local créé à l'installation
+reste disponible en secours (« Compte local du portail »).
+
 ## Variables d'environnement
 
 | Variable | Défaut | Rôle |
 | --- | --- | --- |
 | `SERVER_NAME` | `:8080` | `:8080` = HTTP derrière un reverse proxy ; un nom de domaine = HTTPS automatique sur 80/443 |
 | `TRUSTED_PROXIES` | *(vide)* | Adresses du reverse proxy dont les en-têtes `X-Forwarded-*` sont crus. `private_ranges` pour un proxy sur le réseau Docker |
-| `APP_URL` | *(vide)* | Adresse publique du site, utilisée pour afficher le lien d'installation dans les logs |
+| `APP_URL` | *(vide)* | Adresse publique du site : lien d'installation dans les logs et **adresse de retour de la connexion Conclave** (`APP_URL/api/auth/conclave/callback`) |
 | `DATABASE_URL` | SQLite dans `/data` | Base PostgreSQL : `postgresql://user:pass@hôte:5432/base?serverVersion=16&charset=utf8` |
 | `APP_SECRET` | généré dans `/data` | Secret Symfony ; généré aléatoirement au premier démarrage s'il n'est pas fourni |
 | `SETUP_TOKEN` | généré à chaque démarrage | Impose un jeton d'installation connu d'avance (déploiement automatisé) |

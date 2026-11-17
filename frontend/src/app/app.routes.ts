@@ -154,6 +154,12 @@ export const routes: Routes = [
           import('./features/admin/join-requests-admin').then((m) => m.JoinRequestsAdmin),
       },
       {
+        path: 'comptes',
+        canActivate: [adminGuard],
+        title: site('Comptes — admin'),
+        loadComponent: () => import('./features/admin/accounts-admin').then((m) => m.AccountsAdmin),
+      },
+      {
         path: 'ressources',
         canActivate: [adminGuard],
         title: site('Ressources — admin'),

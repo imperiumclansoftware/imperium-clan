@@ -6,7 +6,10 @@ import { Member } from './api/models';
 
 export interface CurrentUser {
   readonly id: string; // UUID opaque : ni généré ni interprété côté client
-  readonly email: string;
+  /** null pour un compte connecté avec Conclave */
+  readonly email: string | null;
+  /** Compte connecté avec Conclave (droits recalculés à chaque connexion) */
+  readonly conclave: boolean;
   readonly displayName: string;
   readonly roles: readonly string[];
   /** Fiche membre reliée au compte (pseudo, branches), null si aucune. */
@@ -22,6 +25,10 @@ export interface CurrentUser {
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly user = signal<CurrentUser | null>(null);
+  private readonly conclave = signal(false);
+
+  /** La connexion avec Conclave est configurée sur ce portail (bouton sur la page de connexion). */
+  readonly conclaveEnabled = this.conclave.asReadonly();
 
   readonly currentUser = this.user.asReadonly();
   readonly isAuthenticated = computed(() => this.user() !== null);
@@ -35,7 +42,8 @@ export class AuthService {
 
   /** Recharge la session (cookie HttpOnly). Route publique : un visiteur reçoit `user: null`, pas un 401. */
   refresh(): Observable<CurrentUser | null> {
-    return this.http.get<{ user: CurrentUser | null }>('api/session').pipe(
+    return this.http.get<{ user: CurrentUser | null; conclave?: boolean }>('api/session').pipe(
+      tap((r) => this.conclave.set(r.conclave === true)),
       map((r) => r.user),
       catchError(() => of(null)),
       tap((user) => this.user.set(user)),

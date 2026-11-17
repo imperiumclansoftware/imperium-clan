@@ -209,3 +209,18 @@ export interface BranchProfile {
   /** Présentation (texte riche), affichée sous l'accroche dans la zone de la branche. */
   readonly content: RichDoc;
 }
+
+/** Compte du portail (Administration → Comptes) */
+export interface AdminAccount {
+  readonly id: string;
+  readonly displayName: string;
+  /** null pour un compte connecté avec Conclave */
+  readonly email: string | null;
+  readonly conclave: boolean;
+  /** Relié à une fiche membre Conclave */
+  readonly linked: boolean;
+  readonly avatarUrl: string | null;
+  readonly admin: boolean;
+  readonly editor: boolean;
+  readonly lastLoginAt: string | null;
+}

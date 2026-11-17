@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { SetupApi } from '../../core/api/setup-api';
@@ -20,39 +28,84 @@ import { Sceau } from '../../shared/sceau';
           <p class="libelle">Espace membre</p>
           <h1>Imperium</h1>
         </div>
-        <p class="alerte secondaire">
-          La connexion avec ton compte Conclave arrive bientôt. En attendant, utilise le compte que
-          t’a remis un administrateur du clan.
-        </p>
-        <form [formGroup]="form" (ngSubmit)="submit()" class="pile">
-          <div class="champ">
-            <label for="email">E-mail</label>
-            <input
-              id="email"
-              type="email"
-              formControlName="email"
-              autocomplete="username"
-              required
-            />
-          </div>
-          <div class="champ">
-            <label for="password">Mot de passe</label>
-            <input
-              id="password"
-              type="password"
-              formControlName="password"
-              autocomplete="current-password"
-              required
-            />
-          </div>
-          @if (error()) {
-            <!-- Message générique : ne révèle pas si le compte existe -->
-            <p class="erreur" role="alert">Identifiants invalides.</p>
-          }
-          <button type="submit" class="btn btn-principal" [disabled]="form.invalid || pending()">
-            Se connecter
-          </button>
-        </form>
+        @if (erreur(); as message) {
+          <p class="erreur" role="alert">{{ message }}</p>
+        }
+        @if (auth.conclaveEnabled()) {
+          <a class="btn btn-principal conclave" [href]="conclaveHref()"
+            >Se connecter avec Conclave</a
+          >
+          <p class="aide">
+            Ton compte Conclave suffit : membres du clan, accès à l’espace membre ; branche
+            Communication, publication des actualités.
+          </p>
+          <details class="secours">
+            <summary>Compte local du portail (secours)</summary>
+            <form [formGroup]="form" (ngSubmit)="submit()" class="pile">
+              <div class="champ">
+                <label for="email">E-mail</label>
+                <input
+                  id="email"
+                  type="email"
+                  formControlName="email"
+                  autocomplete="username"
+                  required
+                />
+              </div>
+              <div class="champ">
+                <label for="password">Mot de passe</label>
+                <input
+                  id="password"
+                  type="password"
+                  formControlName="password"
+                  autocomplete="current-password"
+                  required
+                />
+              </div>
+              @if (error()) {
+                <!-- Message générique : ne révèle pas si le compte existe -->
+                <p class="erreur" role="alert">Identifiants invalides.</p>
+              }
+              <button
+                type="submit"
+                class="btn btn-principal"
+                [disabled]="form.invalid || pending()"
+              >
+                Se connecter
+              </button>
+            </form>
+          </details>
+        } @else {
+          <form [formGroup]="form" (ngSubmit)="submit()" class="pile">
+            <div class="champ">
+              <label for="email">E-mail</label>
+              <input
+                id="email"
+                type="email"
+                formControlName="email"
+                autocomplete="username"
+                required
+              />
+            </div>
+            <div class="champ">
+              <label for="password">Mot de passe</label>
+              <input
+                id="password"
+                type="password"
+                formControlName="password"
+                autocomplete="current-password"
+                required
+              />
+            </div>
+            @if (error()) {
+              <!-- Message générique : ne révèle pas si le compte existe -->
+              <p class="erreur" role="alert">Identifiants invalides.</p>
+            }
+            <button type="submit" class="btn btn-principal" [disabled]="form.invalid || pending()">
+              Se connecter
+            </button>
+          </form>
+        }
         <a routerLink="/" class="secondaire retour">← Retour au site</a>
       </div>
     </main>
@@ -79,6 +132,20 @@ import { Sceau } from '../../shared/sceau';
       border-radius: var(--imp-rayon-xl);
       padding: var(--imp-e-6);
     }
+    .conclave {
+      justify-self: stretch;
+      text-align: center;
+    }
+    .secours summary {
+      cursor: pointer;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      color: var(--imp-gris-sombre);
+    }
+    .secours[open] summary {
+      margin-bottom: var(--imp-e-3);
+    }
     .retour {
       display: inline-flex;
       min-height: 44px;
@@ -87,12 +154,20 @@ import { Sceau } from '../../shared/sceau';
   `,
 })
 export class Login implements OnInit {
-  private readonly auth = inject(AuthService);
+  protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly setup = inject(SetupApi);
 
   /** ?retour=/ressources : page demandée avant la connexion (chemin interne uniquement). */
   readonly retour = input<string>();
+  /** ?erreur=… : échec de la connexion avec Conclave, renvoyé par le serveur */
+  readonly erreur = input<string>();
+
+  /** Lien relatif (base href) vers le départ de la connexion Conclave, avec la page à rouvrir après. */
+  protected readonly conclaveHref = computed(() => {
+    const retour = safeReturnUrl(this.retour());
+    return 'api/auth/conclave' + (retour ? '?retour=' + encodeURIComponent(retour) : '');
+  });
 
   protected readonly fondClan = backgroundUrl('clan');
   protected readonly error = signal(false);

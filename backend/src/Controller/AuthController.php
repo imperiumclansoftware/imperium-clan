@@ -7,6 +7,8 @@ namespace App\Controller;
 use App\Api\Presenter;
 use App\Entity\User;
 use App\Repository\MemberRepository;
+use App\Security\ConclaveSso;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,11 +22,13 @@ final class AuthController extends AbstractController
 
     /** Le firewall json_login authentifie avant d'arriver ici ; un échec renvoie un 401 générique. */
     #[Route('/api/login', name: 'api_login', methods: ['POST'])]
-    public function login(#[CurrentUser] ?User $user): JsonResponse
+    public function login(#[CurrentUser] ?User $user, EntityManagerInterface $em): JsonResponse
     {
         if (null === $user) {
             return $this->json(['error' => 'Invalid credentials.'], 401);
         }
+        $user->markLoggedIn();
+        $em->flush();
 
         return $this->me($user);
     }
@@ -40,9 +44,13 @@ final class AuthController extends AbstractController
      * de l'application). Première requête du front, elle pose aussi le cookie XSRF-TOKEN.
      */
     #[Route('/api/session', name: 'api_session', methods: ['GET'])]
-    public function session(#[CurrentUser] ?User $user): JsonResponse
+    public function session(#[CurrentUser] ?User $user, ConclaveSso $sso): JsonResponse
     {
-        return $this->json(['user' => null === $user ? null : $this->describe($user)]);
+        return $this->json([
+            'user' => null === $user ? null : $this->describe($user),
+            // Bouton « Se connecter avec Conclave » sur la page de connexion
+            'conclave' => $sso->isConfigured(),
+        ]);
     }
 
     /** @return array<string, mixed> */
@@ -55,6 +63,7 @@ final class AuthController extends AbstractController
             'id' => (string) $user->getId(),
             'email' => $user->getEmail(),
             'displayName' => $user->getDisplayName(),
+            'conclave' => $user->isConclaveAccount(),
             'roles' => $user->getRoles(),
             'member' => null === $member ? null : Presenter::member($member),
         ];

@@ -83,7 +83,9 @@ Si Docker tourne sur un autre hôte, surcharge `DATABASE_URL` dans `backend/.env
 | `/api/admin/gallery/events`, `POST /api/admin/gallery/move` | `ROLE_EDITOR` ; un événement en brouillon et ses images restent privés |
 | `GET /api/public/branches`, `GET /api/public/news?branch=ICG` | public |
 | `PUT /api/admin/branches/{ICG,ICF,ICC,ICS}` | `ROLE_ADMIN` |
-| `GET /api/session` | public : utilisateur connecté ou `null`, pose le cookie XSRF |
+| `GET /api/session` | public : utilisateur connecté ou `null`, `conclave` (connexion Conclave disponible), pose le cookie XSRF |
+| `GET /api/auth/conclave[?retour=/chemin]`, `GET /api/auth/conclave/callback` | public ; connexion avec Conclave (navigation complète, erreurs renvoyées sur `/connexion?erreur=…`) |
+| `GET /api/admin/accounts`, `PUT /api/admin/accounts/{id}/admin` | `ROLE_ADMIN` ; comptes du portail, désignation des administrateurs (409 : soi-même ou dernier administrateur) |
 | `GET /api/setup`, `POST /api/setup` | public ; création du premier administrateur, uniquement sans compte existant et avec le jeton d'installation |
 | `GET /api/member/resources`, `…/{id}/file` | `ROLE_MEMBER` ; SVG, PDF, ZIP toujours en pièce jointe + CSP `sandbox` |
 | `/api/admin/news`, `/api/admin/gallery` | `ROLE_EDITOR` |
@@ -133,8 +135,14 @@ purge quotidienne). Hors Docker :
 
 ## Conclave
 
-- **SSO** des administrateurs : Conclave fournisseur OpenID Connect (ADR 0003, *proposé*). En attendant, comptes
-  locaux créés par la page `/installation` (premier administrateur) puis `app:user:create` (ils resteront le secours).
+- **Connexion avec Conclave** (ADR 0003, *accepté*, **Conclave ≥ 0.8.0**) : bouton « Se connecter avec Conclave »
+  sur `/connexion`. Flux OpenID Connect *authorization code* + PKCE (`App\Security\ConclaveSso`), compte créé à
+  la première connexion, droits recalculés à chaque fois (`AccountProvisioner`) : membre → espace membre ; branche
+  Communication → actualités pour toutes les branches ; administrateurs désignés dans **Administration → Comptes**.
+  Côté Conclave, le client du portail doit avoir les portées `openid profile` et l'adresse de retour
+  `https://<portail>/api/auth/conclave/callback` (`app:oauth:client:update`). Côté portail, `APP_URL` doit être
+  l'adresse publique du portail (elle forme cette adresse de retour). Comptes locaux (`/installation`,
+  `app:user:create`) : secours.
 - **Membres** (ADR 0004, *accepté*) : `ConclaveMemberSource` appelle `POST /oauth/token` (client credentials,
   scope `portal:members`) puis `GET /api/portal/members`, fournis par **Conclave ≥ 0.7.0**. Côté Conclave :
   `docker exec -it conclave-conclave-1 php bin/console app:oauth:client:create --name="Portail" --scope=portal:members`.

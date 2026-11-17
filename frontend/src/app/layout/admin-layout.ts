@@ -135,6 +135,7 @@ export class AdminLayout {
       { path: '/admin/membres', label: 'Membres', exact: false, admin: true },
       { path: '/admin/candidatures', label: 'Candidatures', exact: false, admin: true },
       { path: '/admin/ressources', label: 'Ressources', exact: false, admin: true },
+      { path: '/admin/comptes', label: 'Comptes', exact: false, admin: true },
     ];
     return all.filter((l) => !l.admin || this.auth.isAdmin());
   });

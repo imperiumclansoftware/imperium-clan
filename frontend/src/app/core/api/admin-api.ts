@@ -8,6 +8,7 @@ import {
   GalleryEventInput,
   RichDoc,
   BranchProfile,
+  AdminAccount,
   AdminMember,
   AdminResource,
   ResourceCategory,
@@ -135,6 +136,12 @@ export class AdminApi {
   // Membres
   members(): Observable<{ items: AdminMember[]; syncConfigured: boolean }> {
     return this.http.get<{ items: AdminMember[]; syncConfigured: boolean }>('api/admin/members');
+  }
+  accounts(): Observable<AdminAccount[]> {
+    return this.http.get<Items<AdminAccount>>('api/admin/accounts').pipe(map((r) => r.items));
+  }
+  setAccountAdmin(accountId: string, admin: boolean): Observable<AdminAccount> {
+    return this.http.put<AdminAccount>(`api/admin/accounts/${id(accountId)}/admin`, { admin });
   }
   setMemberRank(memberId: string, rank: ClanRank): Observable<AdminMember> {
     return this.http.put<AdminMember>(`api/admin/members/${id(memberId)}/rank`, { rank });
