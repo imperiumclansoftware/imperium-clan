@@ -4,6 +4,7 @@ import { PublicApi } from '../../core/api/public-api';
 import { BRANCHES, BRANCH_CODES, BranchCode } from '../../core/branches';
 import { BranchPills } from '../../shared/branch-pills';
 import { remote } from '../../shared/remote';
+import { rankLabel } from '../../core/ranks';
 import { Sceau } from '../../shared/sceau';
 import { Status } from '../../shared/status';
 
@@ -62,16 +63,21 @@ import { Status } from '../../shared/status';
           @for (member of filtered(); track member.id) {
             <li class="carte membre">
               <div class="identite">
-                <app-sceau [branches]="member.branches" [size]="72" [decorative]="true" />
-                @if (member.avatarUrl; as avatar) {
-                  <img [src]="avatar" alt="" class="avatar" width="40" height="40" loading="lazy" />
-                }
-              </div>
-              <div class="pile">
-                <h2>{{ member.pseudo }}</h2>
-                @if (member.title) {
-                  <p class="libelle">{{ member.title }}</p>
-                }
+                <app-sceau
+                  [branches]="member.branches"
+                  [size]="88"
+                  [avatar]="member.avatarUrl"
+                  [decorative]="true"
+                />
+                <div class="pile nom">
+                  <h2>{{ member.pseudo }}</h2>
+                  <span class="grade" [attr.data-grade]="member.rank">{{
+                    rankLabel(member.rank)
+                  }}</span>
+                  @if (member.title) {
+                    <p class="libelle">{{ member.title }}</p>
+                  }
+                </div>
               </div>
               <app-branch-pills [branches]="member.branches" />
               @if (member.bio) {
@@ -105,18 +111,16 @@ import { Status } from '../../shared/status';
       gap: var(--imp-e-4);
     }
     .identite {
-      position: relative;
-      width: 72px;
+      display: flex;
+      align-items: center;
+      gap: var(--imp-e-4);
     }
-    .avatar {
-      position: absolute;
-      right: -10px;
-      bottom: -6px;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid var(--imp-panneau);
+    .nom {
+      gap: var(--imp-e-1);
+      min-width: 0;
+    }
+    .nom h2 {
+      overflow-wrap: anywhere;
     }
     h2 {
       font-size: var(--imp-taille-l);
@@ -127,6 +131,7 @@ import { Status } from '../../shared/status';
   `,
 })
 export class Members {
+  protected readonly rankLabel = rankLabel;
   private readonly router = inject(Router);
 
   /** Filtre partagé dans l'URL : ?branches=ICG,ICS (plusieurs branches possibles). */

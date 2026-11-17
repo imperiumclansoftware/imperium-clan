@@ -80,6 +80,17 @@ type BackgroundChoice = BackgroundKey | 'uni';
             <app-branch-picker [formControl]="branchControl" legend="Tes branches" />
           }
 
+          @if (avatarUrl()) {
+            <label class="case">
+              <input
+                type="checkbox"
+                [checked]="useAvatar()"
+                (change)="useAvatar.set($any($event.target).checked)"
+              />
+              Mon avatar Conclave au centre du sceau
+            </label>
+          }
+
           <fieldset class="champ">
             <legend>Fond</legend>
             <div class="fonds">
@@ -266,6 +277,11 @@ export class BannerGenerator {
   private readonly images = new Map<BackgroundKey, Promise<HTMLImageElement>>();
   private readonly backgroundImage = signal<HTMLImageElement | null>(null);
 
+  /** Avatar synchronisé depuis Conclave (même origine : le PNG reste exportable). */
+  protected readonly avatarUrl = computed(() => this.profile()?.avatarUrl ?? null);
+  protected readonly useAvatar = signal(true);
+  private readonly avatarImage = signal<HTMLImageElement | null>(null);
+
   constructor() {
     effect(() => {
       const requested = this.format();
@@ -297,6 +313,22 @@ export class BannerGenerator {
       );
     });
 
+    // Charge l'avatar du membre s'il en a un ; en cas d'échec, le sceau garde son I gothique.
+    effect(() => {
+      const url = this.avatarUrl();
+      this.avatarImage.set(null);
+      if (url) {
+        loadImage(url).then(
+          (img) => {
+            if (this.avatarUrl() === url) {
+              this.avatarImage.set(img);
+            }
+          },
+          () => this.avatarImage.set(null),
+        );
+      }
+    });
+
     // Redessine à chaque changement. Les dimensions ne sont fixées QU'ICI : redimensionner un canvas
     // l'efface, un binding width/height réappliqué après le dessin donnerait une image vide.
     effect(() => {
@@ -305,6 +337,7 @@ export class BannerGenerator {
         branches: this.branches(),
         format: this.current(),
         background: this.backgroundImage(),
+        avatar: this.useAvatar() ? this.avatarImage() : null,
       };
       if (!this.ready()) {
         return;

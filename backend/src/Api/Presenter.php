@@ -33,6 +33,7 @@ final class Presenter
             'bio' => $m->getBio(),
             'branches' => Branch::toValues($m->getBranches()),
             'avatarUrl' => self::media('avatars', $m->getAvatarFile()),
+            'rank' => $m->getRank()->value,
         ];
     }
 

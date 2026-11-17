@@ -44,6 +44,9 @@ export interface BannerOptions {
   /** Image de fond (fonds du clan), recadrée en « cover » sous un voile sombre. null = fond uni. */
   readonly background?:
     (CanvasImageSource & { readonly width: number; readonly height: number }) | null;
+  /** Avatar du membre (Conclave), dessiné au centre du sceau à la place du I gothique. */
+  readonly avatar?:
+    (CanvasImageSource & { readonly width: number; readonly height: number }) | null;
 }
 
 const COLORS = {
@@ -116,7 +119,7 @@ export function drawBanner(ctx: CanvasRenderingContext2D, options: BannerOptions
   const left = Math.round((W - total) / 2);
   const centerY = (H - band) / 2;
 
-  drawSeal(ctx, left, centerY - seal / 2, seal, options.branches);
+  drawSeal(ctx, left, centerY - seal / 2, seal, options.branches, options.avatar ?? null);
 
   const textX = left + seal + gap;
   let y = centerY - textHeight / 2;
@@ -204,6 +207,7 @@ function drawSeal(
   y: number,
   size: number,
   active: readonly BranchCode[],
+  avatar: (CanvasImageSource & { readonly width: number; readonly height: number }) | null = null,
 ): void {
   const palette = SCEAU_PALETTE.sombre;
   ctx.save();
@@ -232,8 +236,21 @@ function drawSeal(
     ctx.restore();
   }
 
-  ctx.translate(-4, 0);
-  ctx.fill(new Path2D(I_GOTHIQUE));
+  if (avatar) {
+    // Portrait découpé en disque (rayon 62 sur 200), recadré comme un « cover »
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(100, 100, 62, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.fillStyle = palette.off;
+    ctx.fillRect(38, 38, 124, 124);
+    const r = coverRect(avatar.width, avatar.height, 124, 124);
+    ctx.drawImage(avatar, 38 + r.x, 38 + r.y, r.w, r.h);
+    ctx.restore();
+  } else {
+    ctx.translate(-4, 0);
+    ctx.fill(new Path2D(I_GOTHIQUE));
+  }
   ctx.restore();
 }
 

@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, afterRenderEffect, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PublicApi } from '../../core/api/public-api';
 import { BRANCHES } from '../../core/branches';
 import { RichText } from '../../shared/rich-text';
@@ -27,7 +28,14 @@ import { Status } from '../../shared/status';
             <ul role="list">
               @for (page of p.value; track page.id) {
                 <li>
-                  <a [href]="'#' + page.slug">{{ page.title }}</a>
+                  <a
+                    routerLink="."
+                    [fragment]="page.slug"
+                    [class.actif]="fragment() === page.slug"
+                    [attr.aria-current]="fragment() === page.slug ? 'location' : null"
+                    (click)="onLink(page.slug)"
+                    >{{ page.title }}</a
+                  >
                 </li>
               }
             </ul>
@@ -92,8 +100,12 @@ import { Status } from '../../shared/status';
       color: var(--imp-gris-sombre);
       text-decoration: none;
     }
-    .sommaire a:hover {
+    .sommaire a:hover,
+    .sommaire a.actif {
       color: var(--imp-ivoire);
+    }
+    .sommaire a.actif {
+      font-weight: 600;
     }
     .sections {
       gap: var(--imp-e-4);
@@ -114,4 +126,41 @@ import { Status } from '../../shared/status';
 export class Clan {
   protected readonly branches = BRANCHES;
   protected readonly pages = remote(inject(PublicApi).pages());
+  /** Section visée par l'adresse (/le-clan#reglement), mise en avant dans le sommaire */
+  protected readonly fragment = toSignal(inject(ActivatedRoute).fragment, { initialValue: null });
+
+  constructor() {
+    // Lien direct vers une section : les sections arrivent après la navigation, on défile une fois
+    // qu'elles sont affichées (le défilement automatique du routeur a eu lieu trop tôt).
+    afterRenderEffect(() => {
+      const fragment = this.fragment();
+      if (this.pages().state === 'ok' && fragment && !this.scrolledTo) {
+        this.scrolledTo = fragment;
+        this.goTo(fragment);
+      }
+    });
+  }
+
+  private scrolledTo: string | null = null;
+
+  /**
+   * Clic dans le sommaire : le routeur (routerLink + fragment, anchorScrolling) défile vers une NOUVELLE
+   * section ; un second clic sur la section déjà visée serait ignoré par lui, on défile alors ici.
+   */
+  protected onLink(slug: string): void {
+    if (this.fragment() === slug) {
+      this.goTo(slug);
+    }
+  }
+
+  /** Défile jusqu'à la section (marge prévue pour l'en-tête collant : scroll-margin-top). */
+  private goTo(slug: string): void {
+    this.scrolledTo = slug;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    requestAnimationFrame(() =>
+      document
+        .getElementById(slug)
+        ?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }),
+    );
+  }
 }

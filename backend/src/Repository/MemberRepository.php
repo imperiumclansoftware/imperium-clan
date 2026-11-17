@@ -19,6 +19,10 @@ class MemberRepository extends ServiceEntityRepository
     /** @return list<Member> */
     public function findAllOrdered(): array
     {
-        return Paginator::all($this->createQueryBuilder('m')->orderBy('LOWER(m.pseudo)', 'ASC'), Member::class);
+        $members = Paginator::all($this->createQueryBuilder('m')->orderBy('LOWER(m.pseudo)', 'ASC'), Member::class);
+        // Par grade du règlement (Empereur d'abord), puis par pseudo : tri stable sur la liste déjà alphabétique.
+        usort($members, static fn (Member $a, Member $b): int => $a->getRank()->order() <=> $b->getRank()->order());
+
+        return $members;
     }
 }

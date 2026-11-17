@@ -1,5 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { ClanRank } from '../ranks';
 import { Observable, map } from 'rxjs';
 import {
   AdminClanPage,
@@ -134,6 +135,9 @@ export class AdminApi {
   // Membres
   members(): Observable<{ items: AdminMember[]; syncConfigured: boolean }> {
     return this.http.get<{ items: AdminMember[]; syncConfigured: boolean }>('api/admin/members');
+  }
+  setMemberRank(memberId: string, rank: ClanRank): Observable<AdminMember> {
+    return this.http.put<AdminMember>(`api/admin/members/${id(memberId)}/rank`, { rank });
   }
   syncMembers(): Observable<{ created: number; updated: number; removed: number }> {
     return this.http.post<{ created: number; updated: number; removed: number }>(

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\ClanRank;
 use App\Repository\MemberRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -12,7 +13,7 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * Copie locale d'un membre ayant consenti à apparaître sur le portail (ADR 0004).
- * Source de vérité : Conclave. Le portail ne modifie jamais ces champs à la main.
+ * Source de vérité : Conclave, sauf le grade du règlement (rank), attribué dans l'administration du portail.
  */
 #[ORM\Entity(repositoryClass: MemberRepository::class)]
 #[ORM\Index(name: 'idx_member_avatar', columns: ['avatar_file'])]
@@ -43,6 +44,10 @@ class Member
 
     #[ORM\Column]
     private \DateTimeImmutable $syncedAt;
+
+    /** Grade du règlement, propre au portail : la synchronisation n'y touche pas. */
+    #[ORM\Column(name: 'clan_rank', length: 10, enumType: ClanRank::class, options: ['default' => 'membre'])]
+    private ClanRank $rank = ClanRank::Member;
 
     public function __construct(
         /** Identifiant OIDC opaque fourni par Conclave (`sub`). */
@@ -101,6 +106,16 @@ class Member
         $this->title = $title;
         $this->bio = $bio;
         $this->syncedAt = new \DateTimeImmutable();
+    }
+
+    public function getRank(): ClanRank
+    {
+        return $this->rank;
+    }
+
+    public function setRank(ClanRank $rank): void
+    {
+        $this->rank = $rank;
     }
 
     public function setAvatar(?string $file, ?string $checksum): void

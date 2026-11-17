@@ -2,6 +2,11 @@
 
 Portail public du clan Imperium et son administration.
 
+- **Grades du règlement** (Empereur, Officier, Parrain, Membre — `App\Enum\ClanRank`) : attribués dans
+  Administration → Membres, jamais modifiés par la synchronisation Conclave ; un seul Empereur ; affichés en
+  badge sur les cartes, membres triés par grade. Par défaut : Membre.
+- **Avatars Conclave** : synchronisés avec les membres, affichés **au centre du sceau** (à la place du I
+  gothique) sur les cartes, dans l'administration et sur les bannières générées (case pour revenir au sceau).
 - **Partie publique** : accueil, présentation du clan, membres (filtres multi-branches), outils par branche
   (Conclave, Avenger…), actualités, galerie par événements (albums), formulaire « Rejoindre ».
 - **Zones des branches** (`/branches/icg`, `icf`, `icc`, `ics`) : présentation éditable, membres, outils et
@@ -84,6 +89,7 @@ Si Docker tourne sur un autre hôte, surcharge `DATABASE_URL` dans `backend/.env
 | `/api/admin/news`, `/api/admin/gallery` | `ROLE_EDITOR` |
 | `POST /api/admin/content-images` | `ROLE_EDITOR` ; image insérée dans un texte riche → `{url, width, height}` (servie publiquement par `/api/media/content/…`) |
 | `/api/admin/{tools,pages,members,join-requests,resources}` | `ROLE_ADMIN` |
+| `PUT /api/admin/members/{id}/rank` | `ROLE_ADMIN` ; `{rank: empereur\|officier\|parrain\|membre}`, 409 si un autre membre est déjà Empereur |
 
 Rôles : `ROLE_ADMIN` ⊃ `ROLE_EDITOR` ⊃ `ROLE_MEMBER`.
 

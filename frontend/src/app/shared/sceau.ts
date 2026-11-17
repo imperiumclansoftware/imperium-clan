@@ -43,8 +43,15 @@ import { DIAMONDS, I_GOTHIQUE } from '../core/sceau-geometry';
           />
         }
       }
-      <path transform="translate(-4 0)" [attr.d]="glyph" [attr.fill]="palette().ink" />
+      @if (!avatar()) {
+        <path transform="translate(-4 0)" [attr.d]="glyph" [attr.fill]="palette().ink" />
+      }
     </svg>
+    @if (avatar(); as src) {
+      <!-- Portrait du membre au centre du sceau, à la place du I gothique (img HTML : pas de clipPath
+           SVG, dont l'url(#…) casse sous un <base href> non racine). -->
+      <img class="portrait" [src]="src" alt="" loading="lazy" />
+    }
   `,
   styles: `
     /* Arcs animés : passer d'une branche à l'autre fait glisser la couleur. */
@@ -53,8 +60,20 @@ import { DIAMONDS, I_GOTHIQUE } from '../core/sceau-geometry';
     }
     :host {
       display: inline-block;
+      position: relative;
       line-height: 0;
       flex: none;
+    }
+    /* Disque intérieur du sceau : rayon 62 sur 200, centré */
+    .portrait {
+      position: absolute;
+      left: 19%;
+      top: 19%;
+      width: 62%;
+      height: 62%;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #2a2a31;
     }
   `,
 })
@@ -65,6 +84,8 @@ export class Sceau {
   readonly title = input<string | null>(null);
   /** true quand le nom est déjà écrit à côté : le sceau est alors ignoré par les lecteurs d'écran. */
   readonly decorative = input(false);
+  /** Avatar du membre (Conclave), affiché au centre du sceau à la place du I gothique */
+  readonly avatar = input<string | null>(null);
 
   protected readonly glyph = I_GOTHIQUE;
   protected readonly diamonds = DIAMONDS;

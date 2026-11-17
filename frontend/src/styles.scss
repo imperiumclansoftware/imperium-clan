@@ -439,3 +439,31 @@ input[type='checkbox'] {
     scroll-behavior: auto !important;
   }
 }
+
+/* Grade du règlement (cartes des membres) : l'Empereur ressort, les autres grades en contour. */
+.grade {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  width: fit-content;
+  border: 1px solid var(--imp-trait);
+  border-radius: var(--imp-rayon-pastille);
+  padding: 2px var(--imp-e-3);
+  font-size: var(--imp-taille-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--imp-gris-sombre);
+}
+.grade[data-grade='empereur'] {
+  color: var(--imp-noir);
+  background: var(--imp-ivoire);
+  border-color: var(--imp-ivoire);
+}
+.grade[data-grade='officier'] {
+  color: var(--imp-ivoire);
+  border-color: var(--imp-ivoire);
+}
+.grade[data-grade='parrain'] {
+  color: var(--imp-ivoire);
+  border-color: var(--imp-trait-fort);
+}

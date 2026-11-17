@@ -1,3 +1,4 @@
+import { ClanRank } from '../ranks';
 import { BranchCode } from '../branches';
 
 /** Miroir de backend/src/Api/Presenter.php. */
@@ -8,6 +9,8 @@ export interface Member {
   readonly bio: string | null;
   readonly branches: readonly BranchCode[];
   readonly avatarUrl: string | null;
+  /** Grade du règlement, attribué dans l'administration du portail */
+  readonly rank: ClanRank;
 }
 
 export interface AdminMember extends Member {

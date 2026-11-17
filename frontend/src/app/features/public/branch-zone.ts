@@ -19,6 +19,7 @@ import { NewsCard } from '../../shared/news-card';
 import { RichText } from '../../shared/rich-text';
 import { isRichEmpty } from '../../core/rich';
 import { remote } from '../../shared/remote';
+import { rankLabel } from '../../core/ranks';
 import { Sceau } from '../../shared/sceau';
 import { ToolCard } from '../../shared/tool-card';
 
@@ -103,12 +104,15 @@ import { ToolCard } from '../../shared/tool-card';
             <ul class="grille membres" role="list">
               @for (m of members(); track m.id) {
                 <li class="carte membre">
-                  <app-sceau [branches]="m.branches" [size]="48" [decorative]="true" />
-                  <div>
+                  <app-sceau
+                    [branches]="m.branches"
+                    [size]="56"
+                    [avatar]="m.avatarUrl"
+                    [decorative]="true"
+                  />
+                  <div class="pile nom">
                     <p class="pseudo">{{ m.pseudo }}</p>
-                    @if (m.title) {
-                      <p class="libelle">{{ m.title }}</p>
-                    }
+                    <span class="grade" [attr.data-grade]="m.rank">{{ rankLabel(m.rank) }}</span>
                   </div>
                 </li>
               }
@@ -301,6 +305,10 @@ import { ToolCard } from '../../shared/tool-card';
     .pseudo {
       font-weight: 600;
     }
+    .nom {
+      gap: var(--imp-e-1);
+      justify-items: start;
+    }
 
     /* Entrée dans une zone : le contenu glisse légèrement pendant que la couleur change. */
     .hero-texte,
@@ -328,6 +336,7 @@ export class BranchZone implements OnDestroy {
 
   protected readonly branches = BRANCHES;
   protected readonly isEmpty = isRichEmpty;
+  protected readonly rankLabel = rankLabel;
   protected readonly branch = computed<BranchInfo | null>(
     () => BRANCHES.find((b) => b.code === this.code().toUpperCase()) ?? null,
   );

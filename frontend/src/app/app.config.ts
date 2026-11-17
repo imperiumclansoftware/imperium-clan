@@ -5,7 +5,7 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { registerLocaleData } from '@angular/common';
+import { ViewportScroller, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import {
   provideHttpClient,
@@ -38,6 +38,8 @@ export const appConfig: ApplicationConfig = {
     ),
     // Session au démarrage (sans bloquer l'affichage) : sait si l'on est connecté et pose le cookie
     // XSRF-TOKEN, sans lequel le premier envoi d'un formulaire serait refusé.
+    // Défilement vers une ancre (#section) : laisse la place à l'en-tête collant du site.
+    provideAppInitializer(() => inject(ViewportScroller).setOffset([0, 100])),
     provideAppInitializer(() => {
       inject(AuthService).refresh().subscribe();
     }),
