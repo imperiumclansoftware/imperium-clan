@@ -44,7 +44,12 @@ final class CreateUserCommand extends Command
         $name = $input->getArgument('name');
         \assert(\is_string($email) && \is_string($name));
         $password = $io->askQuestion((new Question('Mot de passe'))->setHidden(true));
-        \assert(\is_string($password));
+        // Aucune saisie (ex. : --no-interaction ou -q) : message clair au lieu d'une erreur technique.
+        if (!\is_string($password) || '' === $password) {
+            $io->error('Mot de passe requis : lance la commande dans un terminal interactif (docker exec -it …).');
+
+            return Command::FAILURE;
+        }
 
         $violations = $this->validator->validate($password, [
             new Assert\Length(min: 12),

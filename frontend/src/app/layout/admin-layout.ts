@@ -36,6 +36,7 @@ import { Sceau } from '../shared/sceau';
           <p class="secondaire">{{ auth.currentUser()?.displayName }}</p>
           <div class="ligne">
             <a routerLink="/" class="btn btn-secondaire btn-petit">Voir le site</a>
+            <a routerLink="/ressources" class="btn btn-secondaire btn-petit">Espace membre</a>
             <button type="button" class="btn btn-secondaire btn-petit" (click)="logout()">
               Se déconnecter
             </button>
